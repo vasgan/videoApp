@@ -16,6 +16,10 @@ roomKtx = "2.7.2"
 okhttp = "5.1.0"
 retrofit = "3.0.0"
 gson = "3.0.0"
+coil = "2.7.0"
+shimmer = "0.34.0"
+constraint = "1.1.1"
+navigation = "2.8.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +47,11 @@ okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-intercepto
 okhttp-logging-gson-converter = { module = "com.squareup.retrofit2:converter-gson", version.ref = "gson" }
 retrofit-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
+io-coil-kt-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil"}
+accompanist-google = { module = "com.google.accompanist:accompanist-placeholder-material", version.ref = "shimmer"}
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraint"}
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation"}
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

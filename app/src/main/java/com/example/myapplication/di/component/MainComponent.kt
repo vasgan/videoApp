@@ -1,13 +1,11 @@
 package com.example.myapplication.di.component
 
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import com.example.myapplication.MainActivity
 import com.example.myapplication.data.network.NetworkModule
 import com.example.myapplication.di.module.MainModule
 import dagger.BindsInstance
 import dagger.Component
-import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton

@@ -64,7 +64,12 @@ dependencies {
     implementation(libs.okhttp.logging.gson.converter)
     implementation(libs.retrofit.retrofit)
     implementation(libs.retrofit.converter.moshi)
-  //  implementation(libs.gson)
+    implementation(libs.io.coil.kt.compose)
+    implementation(libs.accompanist.google)
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    //  implementation(libs.gson)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

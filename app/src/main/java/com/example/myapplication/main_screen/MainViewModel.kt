@@ -1,9 +1,10 @@
-package com.example.myapplication.main_page
+package com.example.myapplication.main_screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.video.VideoData
+import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.video.VideoRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,16 +14,14 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val repository: VideoRepository,
 ): ViewModel() {
-    private val _uiState = MutableStateFlow(mutableListOf<VideoData>())
-    val uiState: StateFlow<MutableList<VideoData>> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(mutableListOf<ReleasesElementResponse>())
+    val uiState: StateFlow<MutableList<ReleasesElementResponse>> = _uiState.asStateFlow()
 
     fun getVideo(){
         viewModelScope.launch {
+            delay(3000)
             repository.getVideo().let {
-                val value = it.toMutableList()
-                _uiState.value = value
-                var i = 0
-                i = i + 1
+                _uiState.value = it.toMutableList()
             }
         }
     }
