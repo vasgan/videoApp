@@ -61,8 +61,11 @@ fun AnimeAppNavGraph(
         composable(AnimeDestinations.CURRENT_RELEASE_ROUTE) { entry ->
             val viewModel: ReleaseScreenViewModel = viewModel(factory = viewModelFactory)
             val taskId = entry.arguments?.getString(RELEASE_ID_ARG)
-            taskId?.let { ReleaseScreen(viewModel, it) }
+            taskId?.let {
+                ReleaseScreen(viewModel, it, onReleaseClick = {
+                    navActions.navigateFromReleaseToRelease(it)
+                })
+            }
         }
-
     }
 }

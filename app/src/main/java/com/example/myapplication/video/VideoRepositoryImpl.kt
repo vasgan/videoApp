@@ -2,6 +2,8 @@ package com.example.myapplication.video
 
 import com.example.myapplication.data.db.VideoDao
 import com.example.myapplication.data.network.Api
+import com.example.myapplication.data.network.responses.BaseFranchiseResponse
+import com.example.myapplication.data.network.responses.FranchiseResponse
 import com.example.myapplication.data.network.responses.FullReleaseResponse
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,6 +27,11 @@ class VideoRepositoryImpl  @Inject constructor(
 
     override suspend fun getRelease(id: String): FullReleaseResponse? {
         val result = api.getRelease(id)
+        return result
+    }
+
+    override suspend fun getFranchises(id: String): List<BaseFranchiseResponse>{
+        val result = api.getFranchises(id)
         return result
     }
 }

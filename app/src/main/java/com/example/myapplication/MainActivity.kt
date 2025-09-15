@@ -4,9 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.lifecycle.ViewModelProvider
-import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import javax.inject.Inject
 
@@ -19,6 +17,7 @@ class MainActivity : ComponentActivity() {
     }*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        this.getString(R.string.title_activity_main)
         super.onCreate(savedInstanceState)
         (this.applicationContext as VideoApplication).component.inject(this)
 

@@ -1,6 +1,11 @@
 package com.example.myapplication.ui
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,8 +14,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -41,5 +55,32 @@ fun ShimmerImage(url: String, modifier: Modifier = Modifier) {
                 highlight = PlaceholderHighlight.shimmer(),
                 color = Color.LightGray
             )
+    )
+}
+
+@Composable
+fun AnnotatedClickableText(
+    text: AnnotatedString,
+    modifier: Modifier,
+    textStyle: TextStyle,
+    onAnnotationClick: (String) -> Unit
+) {
+    val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    Text(
+        text = text,
+        modifier = modifier.pointerInput(Unit) {
+            detectTapGestures { pos ->
+                layoutResult.value?.let { layout ->
+                    val offset = layout.getOffsetForPosition(pos)
+                    text.getStringAnnotations(start = offset, end = offset)
+                        .firstOrNull()?.let { ann ->
+                            onAnnotationClick(ann.item)
+                        }
+                }
+            }
+        },
+        onTextLayout = { layoutResult.value = it },
+        style = textStyle
     )
 }

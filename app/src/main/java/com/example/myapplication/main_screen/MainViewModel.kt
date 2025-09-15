@@ -19,7 +19,7 @@ class MainViewModel @Inject constructor(
 
     fun getVideo(){
         viewModelScope.launch {
-            delay(3000)
+            //delay(3000)
             repository.getVideo().let {
                 _uiState.value = it.toMutableList()
             }

@@ -33,4 +33,11 @@ class AnimeNavigation(private val navController: NavHostController) {
         }
     }
 
+    fun navigateFromReleaseToRelease(releaseId: String = "") {
+        navController.navigate(
+            DETAIL_RELEASE_SCREEN.let {
+                if (releaseId != "") "$it?$RELEASE_ID_ARG=$releaseId" else it
+            }
+        )
+    }
 }
