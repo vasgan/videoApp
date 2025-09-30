@@ -1,43 +1,41 @@
 package com.example.myapplication.di.module
 
-import android.content.Context
-import androidx.room.Room
-import com.example.myapplication.data.db.VideoDao
-import com.example.myapplication.data.db.VideoDataBase
+import com.example.myapplication.data.db.DataBaseModule
+import com.example.myapplication.data.db.favorite.FavoriteDao
+import com.example.myapplication.data.db.video.VideoDao
+import com.example.myapplication.data.db.watch_list.WatchListDao
 import com.example.myapplication.data.network.Api
 import com.example.myapplication.data.network.NetworkModule
-import com.example.myapplication.video.VideoRepository
-import com.example.myapplication.video.VideoRepositoryImpl
-import dagger.Binds
+import com.example.myapplication.repository.favorite.FavoriteRepository
+import com.example.myapplication.repository.favorite.FavoriteRepositoryImpl
+import com.example.myapplication.repository.video.ReleaseRepository
+import com.example.myapplication.repository.video.VideoRepositoryImpl
+import com.example.myapplication.repository.watch_list.WatchListRepository
+import com.example.myapplication.repository.watch_list.WatchListRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import okhttp3.Dispatcher
 import javax.inject.Singleton
 
-@Module(includes = [ViewModelModule::class, NetworkModule::class])
+@Module(includes = [ViewModelModule::class, NetworkModule::class, DataBaseModule::class])
 class MainModule {
 
     @Singleton
     @Provides
-    fun provideDataBase(context: Context): VideoDataBase {
-        return Room.databaseBuilder(
-            context.applicationContext, VideoDataBase::class.java, "videoDb"
-        ).build()
-    }
-
-    @Provides
-    fun providesDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
-
-    @Singleton
-    @Provides
-    fun provideAlarmDao(dataBase: VideoDataBase): VideoDao {
-        return dataBase.videoDao()
+    fun provideFavoriteRepository(dao: FavoriteDao): FavoriteRepository {
+        return FavoriteRepositoryImpl(dao)
     }
 
     @Singleton
     @Provides
-    fun provideAlarmRepository(dao: VideoDao, dispatcher: CoroutineDispatcher, api: Api): VideoRepository {
+    fun provideVideoRepository(dao: VideoDao, dispatcher: CoroutineDispatcher, api: Api): ReleaseRepository {
         return VideoRepositoryImpl(dao, dispatcher, api)
+    }
+
+    @Singleton
+    @Provides
+    fun provideWatchListRepository(dao: WatchListDao): WatchListRepository {
+        return WatchListRepositoryImpl(dao)
     }
 }

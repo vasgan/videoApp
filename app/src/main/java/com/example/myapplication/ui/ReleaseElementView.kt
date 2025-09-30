@@ -1,0 +1,60 @@
+package com.example.myapplication.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
+import com.example.myapplication.data.network.responses.ReleasesElementResponse
+
+
+@Composable
+fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> Unit) {
+    ConstraintLayout(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onItemClick(item.id) }) {
+        val (image, title, description) = createRefs()
+        ShimmerImage(
+            "https://aniliberty.top/" + item.poster.preview,
+            Modifier.constrainAs(image) {
+                width = Dimension.value(120.dp)
+                top.linkTo(parent.top)
+                start.linkTo(parent.start)
+            }, ContentScale.FillWidth, 8
+        )
+        Text(
+            text = item.name.main,
+            modifier = Modifier
+                .constrainAs(title) {
+                    top.linkTo(parent.top)
+                    start.linkTo(image.end)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(PaddingValues(16.dp, 0.dp, 16.dp, 0.dp)),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = item.description + " ",//todo выпилить нормально чекать на нулл
+            modifier = Modifier
+                .constrainAs(description) {
+                    top.linkTo(title.bottom)
+                    start.linkTo(image.end)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+            maxLines = 4
+        )
+    }
+}

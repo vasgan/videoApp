@@ -2,6 +2,7 @@ package com.example.myapplication.di.component
 
 import android.content.Context
 import com.example.myapplication.MainActivity
+import com.example.myapplication.data.db.DataBaseModule
 import com.example.myapplication.data.network.NetworkModule
 import com.example.myapplication.di.module.MainModule
 import dagger.BindsInstance
@@ -12,7 +13,8 @@ import javax.inject.Singleton
 @Component(
     modules = [
         MainModule::class,
-        NetworkModule::class
+        NetworkModule::class,
+        DataBaseModule::class
     ],
 )
 interface MainComponent {

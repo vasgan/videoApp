@@ -1,4 +1,4 @@
-package com.example.myapplication.data.db
+package com.example.myapplication.data.db.video
 
 import androidx.room.Dao
 import androidx.room.Query

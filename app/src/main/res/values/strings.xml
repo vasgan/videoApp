@@ -4,4 +4,6 @@
     <string name="genres">Жанры:</string>
     <string name="season">Сезон:</string>
     <string name="type_release">Тип:</string>
+    <string name="favorite">Избранное</string>
+    <string name="views_plans">Буду смотреть</string>
 </resources>

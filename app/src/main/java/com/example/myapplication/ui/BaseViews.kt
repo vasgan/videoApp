@@ -33,11 +33,11 @@ import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 
 @Composable
-fun ShimmerImage(url: String, modifier: Modifier = Modifier) {
+fun ShimmerImage(url: String, modifier: Modifier = Modifier,scale: ContentScale, rounded: Int) {
     var isLoading by remember { mutableStateOf(true) }
 
     AsyncImage(
-        contentScale = ContentScale.Crop,
+        contentScale = scale,
         model = ImageRequest.Builder(LocalContext.current)
             .data(url)
             .crossfade(true)
@@ -49,7 +49,7 @@ fun ShimmerImage(url: String, modifier: Modifier = Modifier) {
         contentDescription = null,
         //todo выпилить либу и запилить кастомный шиммер
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(rounded.dp))
             .placeholder(
                 visible = isLoading,
                 highlight = PlaceholderHighlight.shimmer(),

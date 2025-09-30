@@ -12,4 +12,5 @@ data class Release(
     val durationByEpisode: String,
     val franchise: List<Franchise>,
     val episodes: List<Episode>,
+    val favorite: Boolean
 )
