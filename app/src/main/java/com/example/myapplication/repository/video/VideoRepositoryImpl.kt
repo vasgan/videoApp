@@ -17,7 +17,6 @@ import kotlin.collections.List
 @Singleton
 class VideoRepositoryImpl  @Inject constructor(
     private val localDataSource: VideoDao,
-    private val dispatcher: CoroutineDispatcher,
     private val api: Api
 ) : ReleaseRepository {
     override suspend fun getVideo(): List<ReleasesElementResponse> {

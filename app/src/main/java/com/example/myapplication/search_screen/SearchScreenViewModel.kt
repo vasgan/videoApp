@@ -2,7 +2,9 @@ package com.example.myapplication.search_screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
+import com.example.myapplication.repository.dreamcast.DreamCastRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +15,7 @@ import javax.inject.Inject
 
 class SearchScreenViewModel @Inject constructor(
     private val repository: ReleaseRepository,
+    private val dreamCastRepository: DreamCastRepository
 ): ViewModel() {
     private val _uiState = MutableStateFlow(mutableListOf<ReleasesElementResponse>())
     val uiState: StateFlow<MutableList<ReleasesElementResponse>> = _uiState.asStateFlow()
@@ -37,6 +40,12 @@ class SearchScreenViewModel @Inject constructor(
                     _uiState.value = it.toMutableList()
                 }
             }
+        }
+    }
+
+    fun searchDreamCast(searchText: String) {
+        viewModelScope.launch {
+            dreamCastRepository.searchOnDreamCast(searchText)
         }
     }
 }

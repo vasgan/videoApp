@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -25,13 +24,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.myapplication.AnimeDestinations.MAIN_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
+import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.main_screen.ListScreen
+import com.example.myapplication.player.PLayerViewModel
+import com.example.myapplication.player.PlayerScreen
 import com.example.myapplication.profile_screen.ProfileScreen
 import com.example.myapplication.release_screen.ReleaseScreen
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
@@ -62,33 +65,37 @@ fun AnimeAppNavGraph(
     }, viewModelFactory: ViewModelProvider.Factory
 ) {
     val items = listOf(Root.Home, Root.Search, Root.GlobalSearch, Root.History, Root.Profile)
-    // Текущая destination для подсветки выбранной вкладки
     val currentDestination by navController.currentBackStackEntryAsState()
     val selectedDest = currentDestination?.destination
+    val noBottomBarScreens = listOf(PLAYER_SCREEN_ROUTE)
+    val currentRoute = currentDestination?.destination?.route
+    val showBottomBar = currentRoute in noBottomBarScreens
     Scaffold(bottomBar = {
-        NavigationBar(modifier = Modifier.height(80.dp)) {
-            items.forEach { item ->
-                val selected = selectedDest.isTopLevelSelected(item.route)
-                NavigationBarItem(
-                    selected = selected,
-                    onClick = {
-                        navController.navigate(item.route) {
-                            // Сохраняем состояние предыдущих табов
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+        if (!showBottomBar) {
+            NavigationBar(modifier = Modifier.height(80.dp)) {
+                items.forEach { item ->
+                    val selected = selectedDest.isTopLevelSelected(item.route)
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                // Сохраняем состояние предыдущих табов
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true       // не плодим дубликаты
+                                restoreState = true          // восстанавливаем стек таба
                             }
-                            launchSingleTop = true       // не плодим дубликаты
-                            restoreState = true          // восстанавливаем стек таба
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            painterResource(item.icon),
-                            contentDescription = item.label
-                        )
-                    },
-                    alwaysShowLabel = false
-                )
+                        },
+                        icon = {
+                            Icon(
+                                painterResource(item.icon),
+                                contentDescription = item.label
+                            )
+                        },
+                        alwaysShowLabel = false
+                    )
+                }
             }
         }
     }) { innerPadding ->
@@ -126,11 +133,18 @@ fun AnimeAppNavGraph(
                 )
             }
 
-            composable(Root.History.route) { entry ->
+            composable(AnimeDestinations.PLAYER_SCREEN_ROUTE) { entry ->
+                val taskId = entry.arguments?.getString(PLAYER_URLS)
+                val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
+                PlayerScreen(listOf(taskId.toString()), viewModel)
+            }
 
+            composable(Root.History.route) { entry ->
+                //todo сделать отображение истории
             }
 
             composable(Root.GlobalSearch.route) { entry ->
+                //todo сделать глобальный поиск по всем релизам на шикимори
             }
 
             composable(Root.Profile.route) { entry ->
@@ -164,6 +178,8 @@ fun AnimeAppNavGraph(
                             navActions.navigateFromReleaseToRelease(it)
                         }, onGenreClick = {
                             navActions.navigateFromReleaseToGenreSearch(it)
+                        }, onEpisodeClick = {
+                            navActions.navigateToPlayerScreen(listOf(it))
                         })
                 }
             }

@@ -57,6 +57,7 @@ fun ReleaseScreen(
     id: String,
     onReleaseClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
+    onEpisodeClick: (String) -> Unit
 ) {
     viewModel.getCurrentRelease(id)
     val model by viewModel.uiState.collectAsStateWithLifecycle()
@@ -228,8 +229,9 @@ fun ReleaseScreen(
         }
         model?.episodes?.size?.let { it1 ->
             items(it1) { i ->
-                EpisodeItem(model!!.episodes[i])
-                //EpisodeElement(model!!.episodes[i])
+                EpisodeItem(model!!.episodes[i]){
+                    onEpisodeClick(it)
+                }
             }
 
         }
@@ -268,12 +270,12 @@ fun ReleaseScreen(
 @Composable
 fun EpisodeItem(
     episode: Episode,
-    onItemClick: () -> Unit = {},
+    onItemClick: (url: String) -> Unit,
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onItemClick() }) {
+            .clickable { onItemClick(episode.hls480) }) {
         Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp),

@@ -52,8 +52,12 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-
     implementation(libs.dagger.dagger)
+
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation("androidx.media3:media3-exoplayer-hls")
+
     kapt(libs.dagger.compiler)
 
     implementation(libs.androidx.room.ktx)

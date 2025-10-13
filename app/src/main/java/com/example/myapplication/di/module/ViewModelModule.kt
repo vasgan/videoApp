@@ -6,6 +6,7 @@ import com.example.myapplication.di.ViewModelFactory
 import com.example.myapplication.di.ViewModelKey
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.main_screen.MainViewModel
+import com.example.myapplication.player.PLayerViewModel
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreenViewModel
 import com.example.myapplication.watch.WatchScreenViewModel
@@ -40,6 +41,11 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(WatchScreenViewModel::class)
     abstract fun bindWatchScreenViewModel(watchScreenViewModel: WatchScreenViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(PLayerViewModel::class)
+    abstract fun bindPlayeerScreenViewModel(playerScreenViewModel: PLayerViewModel): ViewModel
 
     @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory

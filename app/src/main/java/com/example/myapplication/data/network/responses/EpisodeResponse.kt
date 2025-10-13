@@ -1,5 +1,7 @@
 package com.example.myapplication.data.network.responses
 
+import com.google.gson.annotations.SerializedName
+
 data class EpisodeResponse (
     val id: String,
     val name: String? = null,
@@ -10,8 +12,13 @@ data class EpisodeResponse (
 
     val preview: ImageOptimizedResponse,
 
+    @SerializedName("hls_480")
     val hls480: String? = null,
+
+    @SerializedName("hls_720")
     val hls720: String? = null,
+
+    @SerializedName("hls_1080")
     val hls1080: String? = null,
 
     val duration: Int,
