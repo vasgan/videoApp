@@ -11,3 +11,5 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val PlayerColor = Color(0xFF152EFF)
+val TransparentColor = Color(0x00152EFF)
+val PlayerBackgroundTextColor = Color(0xCE000000)

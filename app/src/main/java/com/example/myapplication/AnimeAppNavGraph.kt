@@ -28,7 +28,9 @@ import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
+import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
+import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.main_screen.MainViewModel
@@ -133,10 +135,15 @@ fun AnimeAppNavGraph(
                 )
             }
 
-            composable(AnimeDestinations.PLAYER_SCREEN_ROUTE) { entry ->
-                val taskId = entry.arguments?.getString(PLAYER_URLS)
+            composable(PLAYER_SCREEN_ROUTE) { entry ->
+                val release = navController.previousBackStackEntry?.savedStateHandle?.get<Release>(RELEASE_EPISODE)
+                val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
+
                 val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
-                PlayerScreen(listOf(taskId.toString()), viewModel)
+                release?.let { PlayerScreen(episodeId ?: 0, it, viewModel,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }) }
             }
 
             composable(Root.History.route) { entry ->
@@ -178,8 +185,8 @@ fun AnimeAppNavGraph(
                             navActions.navigateFromReleaseToRelease(it)
                         }, onGenreClick = {
                             navActions.navigateFromReleaseToGenreSearch(it)
-                        }, onEpisodeClick = {
-                            navActions.navigateToPlayerScreen(listOf(it))
+                        }, onEpisodeClick = { episode, release ->
+                            navActions.navigateToPlayerScreen(episode, release)
                         })
                 }
             }

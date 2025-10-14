@@ -1,12 +1,14 @@
 package com.example.myapplication
 
+import android.os.Bundle
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
-import com.example.myapplication.AnimeDestinations.PROFILE_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
+import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.AnimeScreens.DETAIL_RELEASE_SCREEN
 import com.example.myapplication.AnimeScreens.FAVORITE_SCREEN
@@ -15,6 +17,7 @@ import com.example.myapplication.AnimeScreens.PLAYER_SCREEN
 import com.example.myapplication.AnimeScreens.PROFILE_SCREEN
 import com.example.myapplication.AnimeScreens.SEARCH_SCREEN
 import com.example.myapplication.AnimeScreens.WILL_WATCH_SCREEN
+import com.example.myapplication.data.ui_data.Release
 
 
 private object AnimeScreens {
@@ -31,6 +34,7 @@ object AnimeDestinationsArgs {
     const val RELEASE_ID_ARG = "userMessage"
     const val GENRE_ID_ARG = "genreId"
     const val PLAYER_URLS = "urls"
+    const val RELEASE_EPISODE = "release_episode"
 }
 
 object AnimeDestinations {
@@ -43,7 +47,7 @@ object AnimeDestinations {
     const val PLAYER_SCREEN_ROUTE = "$PLAYER_SCREEN?$PLAYER_URLS={$PLAYER_URLS}"
 }
 
-class AnimeNavigation(private val navController: NavHostController) {
+class AnimeNavigation(private val navController: NavController) {
     fun navigateToRelease(releaseId: String = "") {
         navController.navigate(
             DETAIL_RELEASE_SCREEN.let {
@@ -55,10 +59,13 @@ class AnimeNavigation(private val navController: NavHostController) {
         }
     }
 
-    fun navigateToPlayerScreen(urls: List<String>) {
+    fun navigateToPlayerScreen(enterEpisode: Int, release: Release) {
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(RELEASE_EPISODE, release)
         navController.navigate(
-            PLAYER_SCREEN.let {
-                if (!urls.isEmpty()) "$it?$PLAYER_URLS=${urls[0]}" else it
+            route = PLAYER_SCREEN.let {
+                "$it?$PLAYER_URLS=${enterEpisode}"
             }
         )
     }

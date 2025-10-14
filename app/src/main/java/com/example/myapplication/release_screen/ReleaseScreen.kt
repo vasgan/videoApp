@@ -46,6 +46,7 @@ import com.example.myapplication.R
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.data.ui_data.Episode
+import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.AnnotatedClickableText
 import com.example.myapplication.ui.ShimmerImage
 
@@ -57,7 +58,7 @@ fun ReleaseScreen(
     id: String,
     onReleaseClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
-    onEpisodeClick: (String) -> Unit
+    onEpisodeClick: (Int, Release) -> Unit
 ) {
     viewModel.getCurrentRelease(id)
     val model by viewModel.uiState.collectAsStateWithLifecycle()
@@ -229,8 +230,8 @@ fun ReleaseScreen(
         }
         model?.episodes?.size?.let { it1 ->
             items(it1) { i ->
-                EpisodeItem(model!!.episodes[i]){
-                    onEpisodeClick(it)
+                EpisodeItem(model!!.episodes[i]) {
+                    onEpisodeClick(i, model!!)
                 }
             }
 

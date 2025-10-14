@@ -1,5 +1,6 @@
 package com.example.myapplication.player
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.repository.video.ReleaseRepository
@@ -14,14 +15,30 @@ import javax.inject.Inject
 class PLayerViewModel  @Inject constructor(
     private val repository: ReleaseRepository,
 ): ViewModel() {
-    private val _uiStateHideViews: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _uiStateHideViews: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val uiStateHideViews: StateFlow<Boolean> = _uiStateHideViews.asStateFlow()
+
     private val _uiPLayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.OnPlay())
     val playerState: StateFlow<PlayerState> = _uiPLayerState.asStateFlow()
-    private var searchJob: Job? = null
-    private val _uiDraggingState: MutableStateFlow<Dragging> = MutableStateFlow(Dragging.OnDraggingEnd())
-    val draggingState: StateFlow<Dragging> = _uiDraggingState.asStateFlow()
 
+    private val _uiDraggingState: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val draggingState: StateFlow<Boolean> = _uiDraggingState.asStateFlow()
+
+    private val _uiStateShowCurrentTime: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val uiStateShowCurrentTime: StateFlow<Boolean> = _uiStateShowCurrentTime.asStateFlow()
+
+    private val _uiStatePlayerSeek: MutableStateFlow<SeekToState> = MutableStateFlow(SeekToState.OnSeekEnd())
+    val uiStatePlayerSeek: StateFlow<SeekToState> = _uiStatePlayerSeek.asStateFlow()
+
+
+    private val _uiStatePosition: MutableStateFlow<Long> = MutableStateFlow(0L)
+    val uiStatePosition: StateFlow<Long> = _uiStatePosition.asStateFlow()
+
+    private val _uiStateSupportView: MutableStateFlow<SupportView> = MutableStateFlow(SupportView.OnShowEnd())
+    val uiStateSpeedX2: StateFlow<SupportView> = _uiStateSupportView.asStateFlow()
+
+
+    private var searchJob: Job? = null
     fun outClick() {
         searchJob?.cancel()
         _uiStateHideViews.value = !_uiStateHideViews.value
@@ -31,15 +48,39 @@ class PLayerViewModel  @Inject constructor(
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(10_000)
-            _uiStateHideViews.value = true
+            Log.e("ololololo", "call after delay")
+            _uiStateHideViews.value = !_uiStateHideViews.value
         }
     }
 
-    fun dragging() {
+    fun fastSpeed() {
+        _uiStateSupportView.value = SupportView.OnSpeedX2()
+    }
+
+    fun endShowSupportView() {
+        _uiStateSupportView.value = SupportView.OnShowEnd()
+    }
+
+    fun showForward() {
+        _uiStateSupportView.value = SupportView.OnSkepForward()
+    }
+
+    fun showBackward() {
+        _uiStateSupportView.value = SupportView.OnSkepBackWard()
+    }
+
+    fun showCurrentTime() {
         hideViews()
+        _uiStateShowCurrentTime.value = !_uiStateShowCurrentTime.value
+    }
+
+    fun dragging() {
+        _uiDraggingState.value = true
+        searchJob?.cancel()
     }
 
     fun draggingEnd() {
+        _uiDraggingState.value = false
         hideViews()
     }
 
@@ -55,23 +96,39 @@ class PLayerViewModel  @Inject constructor(
 
     fun onNextClick() {
         hideViews()
-        _uiPLayerState.value = PlayerState.OnNext()
+        _uiStatePlayerSeek.value = SeekToState.OnNext()
     }
 
     fun onPreviousClick() {
         hideViews()
-        _uiPLayerState.value = PlayerState.OnPrevious()
+        _uiStatePlayerSeek.value = SeekToState.OnPrevious()
+    }
+
+
+    fun changePosition(position: Long) {
+        _uiStatePosition.value = position
+    }
+
+    fun seekEnd() {
+        _uiStatePlayerSeek.value = SeekToState.OnSeekEnd()
     }
 }
 
 sealed class PlayerState {
     class OnPause(): PlayerState()
     class OnPlay(): PlayerState()
-    class OnNext(): PlayerState()
-    class OnPrevious(): PlayerState()
 }
 
-sealed class Dragging {
-    class OnDraggingStart() : Dragging()
-    class OnDraggingEnd(): Dragging()
+
+sealed class SupportView {
+    class OnSpeedX2() : SupportView()
+    class OnSkepForward() : SupportView()
+    class OnSkepBackWard(): SupportView()
+    class OnShowEnd(): SupportView()
+}
+
+sealed class SeekToState {
+    class OnNext() : SeekToState()
+    class OnPrevious() : SeekToState()
+    class OnSeekEnd(): SeekToState()
 }

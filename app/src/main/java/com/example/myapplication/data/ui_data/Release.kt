@@ -1,5 +1,9 @@
 package com.example.myapplication.data.ui_data
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class Release(
     val id: String,
     val name: String,
@@ -13,4 +17,4 @@ data class Release(
     val franchise: List<Franchise>,
     val episodes: List<Episode>,
     val favorite: Boolean
-)
+) : Parcelable
