@@ -29,11 +29,14 @@ class ReleaseScreenViewModel @Inject constructor(
     private val watchListRepository: WatchListRepository
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<Release?> = MutableStateFlow(null)
-    private val _uiStateWatchList: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiState: StateFlow<Release?> = _uiState.asStateFlow()
-    val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
+
+    private val _uiStateWatchList: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val watchListUIState: StateFlow<Boolean> = _uiStateWatchList.asStateFlow()
+
+    private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
+
     fun getCurrentRelease(id: String) {
         viewModelScope.launch {
             _uiStateWatchList.value = watchListRepository.getWatchItem(id.toInt()) != null

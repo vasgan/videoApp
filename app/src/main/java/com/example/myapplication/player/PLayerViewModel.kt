@@ -3,6 +3,8 @@ package com.example.myapplication.player
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.ui_data.Release
+import com.example.myapplication.repository.favorite.FavoriteRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -12,41 +14,62 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class PLayerViewModel  @Inject constructor(
+class PLayerViewModel @Inject constructor(
     private val repository: ReleaseRepository,
-): ViewModel() {
+    private val favoriteRepository: FavoriteRepository
+) : ViewModel() {
     private val _uiStateHideViews: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val uiStateHideViews: StateFlow<Boolean> = _uiStateHideViews.asStateFlow()
 
-    private val _uiPLayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.OnPlay())
+    private val _uiPLayerState: MutableStateFlow<PlayerState> =
+        MutableStateFlow(PlayerState.OnPlay())
     val playerState: StateFlow<PlayerState> = _uiPLayerState.asStateFlow()
 
     private val _uiDraggingState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val draggingState: StateFlow<Boolean> = _uiDraggingState.asStateFlow()
 
-    private val _uiStateShowCurrentTime: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private val _uiStateShowCurrentTime: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiStateShowCurrentTime: StateFlow<Boolean> = _uiStateShowCurrentTime.asStateFlow()
 
-    private val _uiStatePlayerSeek: MutableStateFlow<SeekToState> = MutableStateFlow(SeekToState.OnSeekEnd())
+    private val _uiStatePlayerSeek: MutableStateFlow<SeekToState> =
+        MutableStateFlow(SeekToState.OnSeekEnd())
     val uiStatePlayerSeek: StateFlow<SeekToState> = _uiStatePlayerSeek.asStateFlow()
-
 
     private val _uiStatePosition: MutableStateFlow<Long> = MutableStateFlow(0L)
     val uiStatePosition: StateFlow<Long> = _uiStatePosition.asStateFlow()
 
-    private val _uiStateSupportView: MutableStateFlow<SupportView> = MutableStateFlow(SupportView.OnShowEnd())
+    private val _uiStateSupportView: MutableStateFlow<SupportView> =
+        MutableStateFlow(SupportView.OnShowEnd())
     val uiStateSpeedX2: StateFlow<SupportView> = _uiStateSupportView.asStateFlow()
 
+    private val _uiStateEpisode: MutableStateFlow<Int> = MutableStateFlow(0)
+    val uiStateEpisode: StateFlow<Int> = _uiStateEpisode.asStateFlow()
 
-    private var searchJob: Job? = null
+    private val _uiStateRelease: MutableStateFlow<Release?> = MutableStateFlow(null)
+    val uiStateRelease: StateFlow<Release?> = _uiStateRelease.asStateFlow()
+
+    private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
+
+    private var hideViewsJob: Job? = null
+
+    fun initViewModel(episode: Int, release: Release) {
+        _uiStateEpisode.value = episode
+        _uiStateRelease.value = release
+        viewModelScope.launch {
+            if(favoriteRepository.getFavorite(release.id.toInt()) != null)
+                _uiStateFavorite.value = true
+        }
+    }
+
     fun outClick() {
-        searchJob?.cancel()
+        hideViewsJob?.cancel()
         _uiStateHideViews.value = !_uiStateHideViews.value
     }
 
     fun hideViews() {
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
+        hideViewsJob?.cancel()
+        hideViewsJob = viewModelScope.launch {
             delay(10_000)
             Log.e("ololololo", "call after delay")
             _uiStateHideViews.value = !_uiStateHideViews.value
@@ -76,7 +99,7 @@ class PLayerViewModel  @Inject constructor(
 
     fun dragging() {
         _uiDraggingState.value = true
-        searchJob?.cancel()
+        hideViewsJob?.cancel()
     }
 
     fun draggingEnd() {
@@ -94,16 +117,18 @@ class PLayerViewModel  @Inject constructor(
         _uiPLayerState.value = PlayerState.OnPlay()
     }
 
-    fun onNextClick() {
+    fun onChangeEpisode(episodeNum: Int) {
         hideViews()
-        _uiStatePlayerSeek.value = SeekToState.OnNext()
+        _uiStateEpisode.value = episodeNum
     }
 
-    fun onPreviousClick() {
-        hideViews()
+    fun onSeekBackward() {
         _uiStatePlayerSeek.value = SeekToState.OnPrevious()
     }
 
+    fun onSeekForward() {
+        _uiStatePlayerSeek.value = SeekToState.OnNext()
+    }
 
     fun changePosition(position: Long) {
         _uiStatePosition.value = position
@@ -112,23 +137,38 @@ class PLayerViewModel  @Inject constructor(
     fun seekEnd() {
         _uiStatePlayerSeek.value = SeekToState.OnSeekEnd()
     }
+
+    fun onFavoriteClick() {
+        viewModelScope.launch {
+            val id = _uiStateRelease.value?.id?.toInt()
+            val name = _uiStateRelease.value?.name
+            if (id != null && name != null)
+                if (!_uiStateFavorite.value) {
+                    favoriteRepository.addFavorite(id, name)
+                    _uiStateFavorite.value = true
+                } else {
+                    favoriteRepository.removeFavorite(id)
+                    _uiStateFavorite.value = false
+                }
+        }
+    }
 }
 
 sealed class PlayerState {
-    class OnPause(): PlayerState()
-    class OnPlay(): PlayerState()
+    class OnPause() : PlayerState()
+    class OnPlay() : PlayerState()
 }
 
 
 sealed class SupportView {
     class OnSpeedX2() : SupportView()
     class OnSkepForward() : SupportView()
-    class OnSkepBackWard(): SupportView()
-    class OnShowEnd(): SupportView()
+    class OnSkepBackWard() : SupportView()
+    class OnShowEnd() : SupportView()
 }
 
 sealed class SeekToState {
     class OnNext() : SeekToState()
     class OnPrevious() : SeekToState()
-    class OnSeekEnd(): SeekToState()
+    class OnSeekEnd() : SeekToState()
 }

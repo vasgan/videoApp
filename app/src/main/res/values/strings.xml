@@ -6,4 +6,5 @@
     <string name="type_release">Тип:</string>
     <string name="favorite">Избранное</string>
     <string name="views_plans">Буду смотреть</string>
+    <string name="series">Серия %1$s %2$s</string>
 </resources>
