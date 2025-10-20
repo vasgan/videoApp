@@ -57,12 +57,17 @@ class PLayerViewModel @Inject constructor(
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
         viewModelScope.launch {
-            if(favoriteRepository.getFavorite(release.id.toInt()) != null)
+            if (favoriteRepository.getFavorite(release.id.toInt()) != null)
                 _uiStateFavorite.value = true
         }
     }
 
     fun outClick() {
+        hideViewsJob?.cancel()
+        _uiStateHideViews.value = !_uiStateHideViews.value
+    }
+
+    fun urgentlyHideViews() {
         hideViewsJob?.cancel()
         _uiStateHideViews.value = !_uiStateHideViews.value
     }

@@ -1,7 +1,9 @@
 package com.example.myapplication.player
 
 import android.annotation.SuppressLint
+import android.app.PictureInPictureParams
 import android.util.Log
+import android.util.Rational
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -40,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerView
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
@@ -53,6 +56,7 @@ import kotlinx.coroutines.launch
 fun PlayerScreen(
     episodeCount: Int,
     viewModel: PLayerViewModel,
+    mediaSession: MediaSession?,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -84,6 +88,9 @@ fun PlayerScreen(
             prepare()
             playWhenReady = true
         }
+    }
+    val mediaSession = remember {
+        MediaSession.Builder(context, exoPlayer).build()
     }
 
     fun changeEpisode(episodeNum: Int) {
@@ -133,6 +140,7 @@ fun PlayerScreen(
         )
     ) {
         onDispose {
+            mediaSession.release()
             exoPlayer.release()
         }
     }
@@ -224,6 +232,13 @@ fun PlayerScreen(
                     .padding(end = 16.dp, bottom = 16.dp)
                     .align(Alignment.BottomEnd), isFavorite, {
                     viewModel.onFavoriteClick()
+                }, {
+                    viewModel.urgentlyHideViews()
+                    val aspect = Rational(16, 9)
+                    val params = PictureInPictureParams.Builder()
+                        .setAspectRatio(aspect)
+                        .build()
+                    activity?.enterPictureInPictureMode(params)
                 }
             )
             PlayerControls(playerState, seekBack = {
@@ -314,7 +329,10 @@ fun PlayerScreen(
 }
 
 @Composable
-private fun BottomButtons(modifier: Modifier, favorite: Boolean, onFavoriteClick: () -> Unit) {
+private fun BottomButtons(
+    modifier: Modifier, favorite: Boolean, onFavoriteClick: () -> Unit,
+    onPictureInPicture: () -> Unit
+) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -346,7 +364,7 @@ private fun BottomButtons(modifier: Modifier, favorite: Boolean, onFavoriteClick
         }
         IconButton(
             onClick = {
-                //todo картинка в картинке
+                onPictureInPicture()
             }) {
             Icon(
                 painter = painterResource(R.drawable.baseline_picture_in_picture_24),

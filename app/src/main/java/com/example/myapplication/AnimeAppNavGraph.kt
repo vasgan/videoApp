@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -16,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.session.MediaSession
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -60,6 +60,7 @@ sealed class Root(val route: String, val label: String, val icon: Int) {
 @Composable
 fun AnimeAppNavGraph(
     modifier: Modifier = Modifier,
+    mediaSession: MediaSession?,
     navController: NavHostController = rememberNavController(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     startDestination: String = MAIN_SCREEN_ROUTE,
@@ -148,7 +149,7 @@ fun AnimeAppNavGraph(
                         episodeId ?: 0, viewModel,
                         onBackClick = {
                             navController.popBackStack()
-                        })
+                        }, mediaSession = mediaSession)
                 }
             }
 
