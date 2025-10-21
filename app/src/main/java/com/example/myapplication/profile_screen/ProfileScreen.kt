@@ -20,7 +20,8 @@ import com.example.myapplication.R
 fun ProfileScreen(
     innerPadding: PaddingValues,
     onFavoriteClick: () -> Unit,
-    onWillWatchClick: () -> Unit
+    onWillWatchClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     val localContext = LocalContext.current
     Column(modifier = Modifier.padding(innerPadding)) {
@@ -30,6 +31,9 @@ fun ProfileScreen(
         }
         ItemProfileElement(text = localContext.getString(R.string.views_plans)) {
             onWillWatchClick()
+        }
+        ItemProfileElement(text = localContext.getString(R.string.history)) {
+            onHistoryClick()
         }
     }
 }

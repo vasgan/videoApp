@@ -34,6 +34,8 @@ import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
+import com.example.myapplication.history_screen.HistoryScreen
+import com.example.myapplication.history_screen.HistoryViewModel
 import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.main_screen.ListScreen
 import com.example.myapplication.player.PLayerViewModel
@@ -174,6 +176,9 @@ fun AnimeAppNavGraph(
                     },
                     onWillWatchClick = {
                         navActions.navigateFromProfileToWillWatch()
+                    },
+                    onHistoryClick = {
+                        navActions.navigateToHistryWatchScreen()
                     }
                 )
             }
@@ -223,6 +228,19 @@ fun AnimeAppNavGraph(
                         innerPadding.calculateBottomPadding()
                     ), viewModel, {
                         navActions.navigateFromFavoriteToReleaseScreen(it)
+                    })
+            }
+
+            composable (AnimeDestinations.HISTORY_SCREEN_ROUTE) {
+                val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
+                HistoryScreen(
+                    PaddingValues(
+                        0.dp,
+                        innerPadding.calculateTopPadding(),
+                        0.dp,
+                        innerPadding.calculateBottomPadding()
+                    ), viewModel, {
+                        //navActions.navigateFromFavoriteToReleaseScreen(it)
                     })
             }
         }

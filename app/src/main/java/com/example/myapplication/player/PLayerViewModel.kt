@@ -3,8 +3,10 @@ package com.example.myapplication.player
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.repository.favorite.FavoriteRepository
+import com.example.myapplication.repository.history.HistoryRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -16,7 +18,8 @@ import javax.inject.Inject
 
 class PLayerViewModel @Inject constructor(
     private val repository: ReleaseRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val historyRepository: HistoryRepository
 ) : ViewModel() {
     private val _uiStateHideViews: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val uiStateHideViews: StateFlow<Boolean> = _uiStateHideViews.asStateFlow()
@@ -137,6 +140,17 @@ class PLayerViewModel @Inject constructor(
 
     fun changePosition(position: Long) {
         _uiStatePosition.value = position
+        viewModelScope.launch {//todo переписать
+            historyRepository.addToHistory(
+                History(
+                    uiStateRelease.value?.id?.toInt() ?: 0,
+                    uiStateRelease.value?.name ?: "",
+                    uiStateEpisode.value.toString(),
+                    position,
+                    System.currentTimeMillis()
+                )
+            )
+        }
     }
 
     fun seekEnd() {

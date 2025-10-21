@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.di.ViewModelFactory
 import com.example.myapplication.di.ViewModelKey
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
+import com.example.myapplication.history_screen.HistoryViewModel
 import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.player.PLayerViewModel
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
@@ -45,7 +46,12 @@ abstract class ViewModelModule {
     @Binds
     @IntoMap
     @ViewModelKey(PLayerViewModel::class)
-    abstract fun bindPlayeerScreenViewModel(playerScreenViewModel: PLayerViewModel): ViewModel
+    abstract fun bindPlayerScreenViewModel(playerScreenViewModel: PLayerViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(HistoryViewModel::class)
+    abstract fun bindHistoryViewModel(historyViewModel: HistoryViewModel): ViewModel
 
     @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory

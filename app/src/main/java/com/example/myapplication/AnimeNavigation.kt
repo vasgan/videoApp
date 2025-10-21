@@ -5,6 +5,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
@@ -12,6 +13,7 @@ import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.AnimeScreens.DETAIL_RELEASE_SCREEN
 import com.example.myapplication.AnimeScreens.FAVORITE_SCREEN
+import com.example.myapplication.AnimeScreens.HISTORY_SCREEN
 import com.example.myapplication.AnimeScreens.MAIN_SCREEN
 import com.example.myapplication.AnimeScreens.PLAYER_SCREEN
 import com.example.myapplication.AnimeScreens.PROFILE_SCREEN
@@ -28,6 +30,7 @@ private object AnimeScreens {
     const val FAVORITE_SCREEN = "favorite_screen"
     const val WILL_WATCH_SCREEN = "will_watch_screen"
     const val PLAYER_SCREEN = "player_screen"
+    const val HISTORY_SCREEN = "history_screen"
 }
 
 object AnimeDestinationsArgs {
@@ -44,6 +47,7 @@ object AnimeDestinations {
     const val PROFILE_SCREEN_ROUTE = PROFILE_SCREEN
     const val FAVORITE_SCREEN_ROUTE = FAVORITE_SCREEN
     const val WILL_WATCH_SCREEN_ROUTE = WILL_WATCH_SCREEN
+    const val HISTORY_SCREEN_ROUTE = HISTORY_SCREEN
     const val PLAYER_SCREEN_ROUTE = "$PLAYER_SCREEN?$PLAYER_URLS={$PLAYER_URLS}"
 }
 
@@ -77,7 +81,8 @@ class AnimeNavigation(private val navController: NavController) {
             }
         )
     }
-    fun navigateFromReleaseToGenreSearch(genres: String = ""){
+
+    fun navigateFromReleaseToGenreSearch(genres: String = "") {
         navController.navigate(
             SEARCH_SCREEN.let {
                 if (genres != "") "$it?$GENRE_ID_ARG=$genres" else it
@@ -85,12 +90,16 @@ class AnimeNavigation(private val navController: NavController) {
         )
     }
 
-    fun navigateFromProfileToFavorite(){
+    fun navigateFromProfileToFavorite() {
         navController.navigate(FAVORITE_SCREEN_ROUTE)
     }
 
-    fun navigateFromProfileToWillWatch(){
+    fun navigateFromProfileToWillWatch() {
         navController.navigate(WILL_WATCH_SCREEN_ROUTE)
+    }
+
+    fun navigateToHistryWatchScreen() {
+        navController.navigate(HISTORY_SCREEN_ROUTE)
     }
 
     fun navigateFromFavoriteToReleaseScreen(releaseId: String = "") {

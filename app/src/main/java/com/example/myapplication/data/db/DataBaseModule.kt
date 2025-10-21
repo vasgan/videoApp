@@ -3,6 +3,7 @@ package com.example.myapplication.data.db
 import android.content.Context
 import androidx.room.Room
 import com.example.myapplication.data.db.favorite.FavoriteDao
+import com.example.myapplication.data.db.history.HistoryDao
 import com.example.myapplication.data.db.video.VideoDao
 import com.example.myapplication.data.db.watch_list.WatchListDao
 import dagger.Module
@@ -40,5 +41,11 @@ class DataBaseModule {
     @Provides
     fun provideWatchListDao(dataBase: AppDataBase): WatchListDao {
         return dataBase.watchListDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideHistoryDao(dataBase: AppDataBase): HistoryDao {
+        return dataBase.historyDao()
     }
 }
