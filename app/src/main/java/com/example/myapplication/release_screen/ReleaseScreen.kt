@@ -58,7 +58,8 @@ fun ReleaseScreen(
     id: String,
     onReleaseClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
-    onEpisodeClick: (Int, Release) -> Unit
+    onEpisodeClick: (Int, Release) -> Unit,
+    onBackClick:() -> Unit
 ) {
     viewModel.getCurrentRelease(id)
     val model by viewModel.uiState.collectAsStateWithLifecycle()
@@ -254,7 +255,9 @@ fun ReleaseScreen(
     TopAppBar(
         title = { Text("") },
         navigationIcon = {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {
+                onBackClick()
+            }) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Назад"

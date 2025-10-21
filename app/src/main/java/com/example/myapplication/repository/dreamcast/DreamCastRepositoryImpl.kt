@@ -51,7 +51,7 @@ class DreamCastRepositoryImpl: DreamCastRepository {
 
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) error("HTTP ${resp.code}")
-                html = resp.body!!.string() // автоматически разжимает gzip/deflate
+                html = resp.body.string() // автоматически разжимает gzip/deflate
             }
             val first = html.lastIndexOf("atob(\"")
             val second = html.lastIndexOf("\").split('||||')")

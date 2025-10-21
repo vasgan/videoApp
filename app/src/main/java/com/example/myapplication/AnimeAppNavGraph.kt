@@ -194,6 +194,8 @@ fun AnimeAppNavGraph(
                             navActions.navigateFromReleaseToGenreSearch(it)
                         }, onEpisodeClick = { episode, release ->
                             navActions.navigateToPlayerScreen(episode, release)
+                        }, onBackClick = {
+                            navController.popBackStack()
                         })
                 }
             }
