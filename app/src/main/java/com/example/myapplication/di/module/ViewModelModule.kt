@@ -10,6 +10,7 @@ import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.player.PLayerViewModel
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreenViewModel
+import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreenViewModel
 import dagger.Binds
 import dagger.Module
@@ -52,6 +53,11 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(HistoryViewModel::class)
     abstract fun bindHistoryViewModel(historyViewModel: HistoryViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(SettingsViewModel::class)
+    abstract fun bindSettingViewModel(historyViewModel: SettingsViewModel): ViewModel
 
     @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory

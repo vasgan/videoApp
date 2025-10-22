@@ -45,6 +45,8 @@ import com.example.myapplication.release_screen.ReleaseScreen
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreen
 import com.example.myapplication.search_screen.SearchScreenViewModel
+import com.example.myapplication.settings.SettingsScreen
+import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreen
 import com.example.myapplication.watch.WatchScreenViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -151,7 +153,8 @@ fun AnimeAppNavGraph(
                         episodeId ?: 0, viewModel,
                         onBackClick = {
                             navController.popBackStack()
-                        }, mediaSession = mediaSession)
+                        }, mediaSession = mediaSession
+                    )
                 }
             }
 
@@ -179,6 +182,9 @@ fun AnimeAppNavGraph(
                     },
                     onHistoryClick = {
                         navActions.navigateToHistryWatchScreen()
+                    },
+                    onSettingsClick = {
+                        navActions.navigateToSettingsScreen()
                     }
                 )
             }
@@ -208,40 +214,38 @@ fun AnimeAppNavGraph(
             composable(AnimeDestinations.WILL_WATCH_SCREEN_ROUTE) {
                 val viewModel: WatchScreenViewModel = viewModel(factory = viewModelFactory)
                 WatchScreen(
-                    PaddingValues(
-                        0.dp,
-                        innerPadding.calculateTopPadding(),
-                        0.dp,
-                        innerPadding.calculateBottomPadding()
-                    ), viewModel, {
+                    viewModel, {
                         navActions.navigateFromFavoriteToReleaseScreen(it)
+                    },
+                    {
+                        navController.popBackStack()
                     })
             }
 
             composable(AnimeDestinations.FAVORITE_SCREEN_ROUTE) {
                 val viewModel: FavoriteScreenViewModel = viewModel(factory = viewModelFactory)
                 FavoriteScreen(
-                    PaddingValues(
-                        0.dp,
-                        innerPadding.calculateTopPadding(),
-                        0.dp,
-                        innerPadding.calculateBottomPadding()
-                    ), viewModel, {
+                    viewModel, {
                         navActions.navigateFromFavoriteToReleaseScreen(it)
+                    }, {
+                        navController.popBackStack()
                     })
             }
 
-            composable (AnimeDestinations.HISTORY_SCREEN_ROUTE) {
+            composable(AnimeDestinations.SETTINGS_SCREEN_ROUTE) {
+                val viewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
+                SettingsScreen(viewModel) {
+                    navController.popBackStack()
+                }
+            }
+
+            composable(AnimeDestinations.HISTORY_SCREEN_ROUTE) {
                 val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
-                HistoryScreen(
-                    PaddingValues(
-                        0.dp,
-                        innerPadding.calculateTopPadding(),
-                        0.dp,
-                        innerPadding.calculateBottomPadding()
-                    ), viewModel, {
-                        //navActions.navigateFromFavoriteToReleaseScreen(it)
-                    })
+                HistoryScreen(viewModel, {
+                    //navActions.navigateFromFavoriteToReleaseScreen(it)
+                }, {
+                    navController.popBackStack()
+                })
             }
         }
     }

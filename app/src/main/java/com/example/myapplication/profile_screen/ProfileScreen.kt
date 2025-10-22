@@ -1,7 +1,5 @@
 package com.example.myapplication.profile_screen
 
-import android.health.connect.datatypes.units.Length
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +19,8 @@ fun ProfileScreen(
     innerPadding: PaddingValues,
     onFavoriteClick: () -> Unit,
     onWillWatchClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     val localContext = LocalContext.current
     Column(modifier = Modifier.padding(innerPadding)) {
@@ -34,6 +33,9 @@ fun ProfileScreen(
         }
         ItemProfileElement(text = localContext.getString(R.string.history)) {
             onHistoryClick()
+        }
+        ItemProfileElement(text = localContext.getString(R.string.settings)) {
+            onSettingsClick()
         }
     }
 }
