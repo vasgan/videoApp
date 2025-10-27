@@ -216,7 +216,6 @@ fun TopBarPlayer(
     }
 }
 
-
 @Composable
 fun PlayerControls(
     playerState: PlayerState,
