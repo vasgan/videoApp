@@ -1,0 +1,13 @@
+# build artifacts
+/build/
+app/build/
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+
+# local configs
+local.properties
+.gradle/
