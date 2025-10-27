@@ -1,1 +1,6 @@
 /build
+.gradle
+.idea/*
+!.idea/codeStyles/
+build
+/gradle.properties
