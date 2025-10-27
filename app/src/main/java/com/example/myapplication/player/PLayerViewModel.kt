@@ -79,7 +79,6 @@ class PLayerViewModel @Inject constructor(
         hideViewsJob?.cancel()
         hideViewsJob = viewModelScope.launch {
             delay(10_000)
-            Log.e("ololololo", "call after delay")
             _uiStateHideViews.value = !_uiStateHideViews.value
         }
     }
@@ -146,8 +145,10 @@ class PLayerViewModel @Inject constructor(
                     uiStateRelease.value?.id?.toInt() ?: 0,
                     uiStateRelease.value?.name ?: "",
                     uiStateEpisode.value.toString(),
+                    uiStateEpisode.value,
                     position,
-                    System.currentTimeMillis()
+                    System.currentTimeMillis(),
+                    uiStateRelease.value?.poster.toString()
                 )
             )
         }
@@ -161,9 +162,10 @@ class PLayerViewModel @Inject constructor(
         viewModelScope.launch {
             val id = _uiStateRelease.value?.id?.toInt()
             val name = _uiStateRelease.value?.name
-            if (id != null && name != null)
+            val imageUrl = _uiStateRelease.value?.poster
+            if (id != null && name != null && imageUrl != null)
                 if (!_uiStateFavorite.value) {
-                    favoriteRepository.addFavorite(id, name)
+                    favoriteRepository.addFavorite(id, name, imageUrl)
                     _uiStateFavorite.value = true
                 } else {
                     favoriteRepository.removeFavorite(id)

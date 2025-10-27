@@ -242,7 +242,7 @@ fun AnimeAppNavGraph(
             composable(AnimeDestinations.HISTORY_SCREEN_ROUTE) {
                 val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
                 HistoryScreen(viewModel, {
-                    //navActions.navigateFromFavoriteToReleaseScreen(it)
+                    navActions.navigateFromFavoriteToReleaseScreen(it)
                 }, {
                     navController.popBackStack()
                 })

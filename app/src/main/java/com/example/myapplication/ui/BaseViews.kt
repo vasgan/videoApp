@@ -1,5 +1,6 @@
 package com.example.myapplication.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -121,7 +122,7 @@ fun CustomSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     bufferedFraction: Float = 0f,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
     trackHeight: Dp = 6.dp,
     thumbRadius: Dp = 8.dp,
     activeColor: Color = Color.Red,

@@ -11,6 +11,8 @@ data class History(
     val releaseId: Int,
     val releaseName: String,
     val episodeId: String,
+    val episodeNumber: Int,
     val timeEnd: Long,
-    val dateUpdate: Long
+    val dateUpdate: Long,
+    val imageUrl: String,
 )

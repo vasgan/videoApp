@@ -2,8 +2,8 @@ package com.example.myapplication.player
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
-import android.util.Log
 import android.util.Rational
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -39,8 +39,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerView
@@ -63,12 +66,11 @@ fun PlayerScreen(
     val activity = context.findActivity()
     activity?.setFullscreen(true)
     val scope = rememberCoroutineScope()
-
     var duration by remember { mutableLongStateOf(0L) }
     var draggingPosition by remember { mutableLongStateOf(0L) }
     var showSeriesList by remember { mutableStateOf(false) }
+    var showChangeQuality by remember { mutableStateOf(false) }
     var secondsSeek by remember { mutableLongStateOf(0L) }
-
     val release by viewModel.uiStateRelease.collectAsState()
     val episodeNumber by viewModel.uiStateEpisode.collectAsState()
     val isShowCurrentTime by viewModel.uiStateShowCurrentTime.collectAsState()
@@ -79,16 +81,17 @@ fun PlayerScreen(
     val playerState by viewModel.playerState.collectAsState()
     val dragging by viewModel.draggingState.collectAsState()
     val isFavorite by viewModel.favoriteUiState.collectAsState()
-
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             release?.episodes[episodeCount]?.hls480?.let {
-                setMediaItem(MediaItem.fromUri(it))
+              //  setMediaItem(MediaItem.fromUri("https://play.dreamerscast.com/hls/5735a073-c4c5-4b08-81db-bdbc83a5acab/aff880e1-c97b-4532-9f04-7e9e444d1829_,1080,720,low,aac,.mp4.urlset/master.m3u8"))
+                   setMediaItem(MediaItem.fromUri(it))
             }
             prepare()
             playWhenReady = true
         }
     }
+
     val mediaSession = remember {
         MediaSession.Builder(context, exoPlayer).build()
     }
@@ -107,25 +110,7 @@ fun PlayerScreen(
         exoPlayer.playWhenReady = true
         showSeriesList = false
     }
-    exoPlayer.addListener(object : Player.Listener {
-        private var wasSeek = false
-        override fun onPositionDiscontinuity(
-            oldPosition: Player.PositionInfo,
-            newPosition: Player.PositionInfo,
-            reason: Int
-        ) {
-            if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-                wasSeek = true
-            }
-        }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            if (wasSeek && isPlaying) {
-                wasSeek = false
-                viewModel.draggingEnd()
-            }
-        }
-    })
     DisposableEffect(
         AndroidView(
             modifier = Modifier
@@ -139,7 +124,27 @@ fun PlayerScreen(
             }
         )
     ) {
+        exoPlayer.addListener(object : Player.Listener {
+            private var wasSeek = false
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    wasSeek = true
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (wasSeek && isPlaying) {
+                    wasSeek = false
+                    viewModel.draggingEnd()
+                }
+            }
+        })
         onDispose {
+            activity?.setFullscreen(true)
             mediaSession.release()
             exoPlayer.release()
         }
@@ -227,6 +232,7 @@ fun PlayerScreen(
         exit = fadeOut(animationSpec = tween(600))
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            //Нижние кнопки
             BottomButtons(
                 Modifier
                     .padding(end = 16.dp, bottom = 16.dp)
@@ -239,9 +245,13 @@ fun PlayerScreen(
                         .setAspectRatio(aspect)
                         .build()
                     activity?.enterPictureInPictureMode(params)
+                }, {
+                    showChangeQuality = true
                 }
             )
-            PlayerControls(playerState, seekBack = {
+            //Кнопки переключить серию, плей пауз
+            PlayerControls(playerState,
+                seekBack = {
                 changeEpisode(episodeNumber - 1)
             }, playerPause = {
                 viewModel.pauseClick()
@@ -250,20 +260,22 @@ fun PlayerScreen(
             }, seekForward = {
                 changeEpisode(episodeNumber + 1)
             })
-            release?.let {
-                Log.e("olololololo", episodeNumber.toString())
-                TopBarPlayer(
+            //Верхний бар плеера
+            TopBarPlayer(
                     Modifier
                         .padding(end = 16.dp, bottom = 16.dp)
-                        .align(Alignment.TopCenter), it, episodeNumber,
+                        .align(Alignment.TopCenter),
+                    release,
+                episodeNumber,
                     {
+                        activity?.setFullscreen(false)
                         onBackClick()
                     }, {
                     }, {
                         showSeriesList = true
                     }
                 )
-            }
+            //скролл плейра
             PlayerSlider(
                 modifier = Modifier
                     .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
@@ -278,6 +290,7 @@ fun PlayerScreen(
                     draggingPosition = dragPosition
                     viewModel.dragging()
                 })
+            //Текст показываюший время текущего трека
             Text(
                 modifier = Modifier
                     .padding(start = 32.dp, bottom = 24.dp)
@@ -313,10 +326,12 @@ fun PlayerScreen(
 
         }
     }
+
     when (playerState) {
         is PlayerState.OnPlay -> if (!exoPlayer.isPlaying) exoPlayer.play()
         is PlayerState.OnPause -> if (exoPlayer.isPlaying) exoPlayer.pause()
     }
+
     if (showSeriesList) {
         release?.episodes?.let {
             ChooseEpisodeDialog(it, {
@@ -326,12 +341,27 @@ fun PlayerScreen(
             })
         }
     }
+
+    if (showChangeQuality) {
+        OpenSettings(
+            availableVideoHeights(exoPlayer),
+            {
+              showChangeQuality = false
+            },
+            {
+                selectVideoHeight(exoPlayer, it)
+                showChangeQuality = false
+            })
+    }
 }
 
 @Composable
 private fun BottomButtons(
-    modifier: Modifier, favorite: Boolean, onFavoriteClick: () -> Unit,
-    onPictureInPicture: () -> Unit
+    modifier: Modifier,
+    favorite: Boolean,
+    onFavoriteClick: () -> Unit,
+    onPictureInPicture: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Row(
         modifier.fillMaxWidth(),
@@ -375,7 +405,7 @@ private fun BottomButtons(
         }
         IconButton(
             onClick = {
-                //todo настройки
+                onSettingsClick()
             }) {
             Icon(
                 painter = painterResource(R.drawable.baseline_settings_24),
@@ -388,7 +418,12 @@ private fun BottomButtons(
 }
 
 @Composable
-private fun OpenSettings(modifier: Modifier) {
+private fun OpenSettings(
+    episodes: List<Int>,
+    dismissDialog: () -> Unit,
+    changeQuality: (Int) -> Unit
+) {
+    ChangeQualityDialog(episodes, { dismissDialog() }, { changeQuality(it) })
     //todo качество
     //todo скорость
     //todo кнопка пропуска опеннинга
@@ -422,4 +457,40 @@ fun calculateTimeFromLongToString(timeInSec: Int): String {
     val secondStr =
         if (second < 10 && second != 0) "0$second" else if (second == 0) "00" else second.toString()
     return "$minuteStr:$secondStr"
+}
+
+@OptIn(UnstableApi::class)
+fun availableVideoHeights(player: ExoPlayer): List<Int> {
+    val set = sortedSetOf<Int>()
+    player.currentTracks.groups
+        .filter { it.type == C.TRACK_TYPE_VIDEO && it.isSupported }
+        .forEach { group ->
+            for (i in 0 until group.mediaTrackGroup.length) {
+                val h = group.mediaTrackGroup.getFormat(i).height
+                if (h > 0) set += h
+            }
+        }
+    return set.toList().sortedDescending()
+}
+
+@OptIn(UnstableApi::class)
+fun selectVideoHeight(player: ExoPlayer, targetHeight: Int) {
+    val groups = player.currentTracks.groups
+        .filter { it.type == C.TRACK_TYPE_VIDEO && it.isSupported }
+    for (g in groups) {
+        val mtg = g.mediaTrackGroup
+        for (i in 0 until mtg.length) {
+            val h = mtg.getFormat(i).height
+            if (h == targetHeight) {
+                val builder = player.trackSelectionParameters.buildUpon()
+                builder.clearOverridesOfType(C.TRACK_TYPE_VIDEO)
+                val selectedTrackGroup = TrackSelectionOverride(
+                    mtg,
+                    listOf(i)
+                )
+                builder.setOverrideForType(selectedTrackGroup)
+                player.trackSelectionParameters = builder.build()
+            }
+        }
+    }
 }

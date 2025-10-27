@@ -19,7 +19,7 @@ class VideoRepositoryImpl  @Inject constructor(
     private val localDataSource: VideoDao,
     private val api: Api
 ) : ReleaseRepository {
-    override suspend fun getVideo(): List<ReleasesElementResponse> {
+    override suspend fun getReleases(): List<ReleasesElementResponse> {
         val result = api.getReleases().body()?.data
         result?.let {
             return result

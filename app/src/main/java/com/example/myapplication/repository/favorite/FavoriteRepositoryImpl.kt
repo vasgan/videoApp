@@ -5,8 +5,8 @@ import com.example.myapplication.data.db.favorite.FavoriteDao
 
 class FavoriteRepositoryImpl(val favoriteDB: FavoriteDao) : FavoriteRepository {
 
-    override suspend fun addFavorite(id: Int, name: String) {
-        favoriteDB.upsert(Favorite(id, name))
+    override suspend fun addFavorite(id: Int, name: String, imageUrl: String) {
+        favoriteDB.upsert(Favorite(id, name, imageUrl))
     }
 
     override suspend fun removeFavorite(id: Int) {

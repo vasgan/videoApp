@@ -5,7 +5,7 @@ import com.example.myapplication.data.network.responses.FullReleaseResponse
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 
 interface ReleaseRepository {
-    suspend fun getVideo(): List<ReleasesElementResponse>
+    suspend fun getReleases(): List<ReleasesElementResponse>
 
     suspend fun getRelease(id: String): FullReleaseResponse?
 

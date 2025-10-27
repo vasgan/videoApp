@@ -41,13 +41,61 @@ import com.example.myapplication.ui.theme.PlayerColor
 import com.example.myapplication.ui.theme.TransparentColor
 
 @Composable
+fun ChangeQualityDialog(
+    episodes: List<Int>,
+    dismissDialog: () -> Unit,
+    changeQuality: (quality: Int) -> Unit
+) {
+    var openDialog by remember { mutableStateOf(true) }
+    if (openDialog) {
+        Dialog(
+            onDismissRequest = {
+                openDialog = false
+                dismissDialog()
+            }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    for (i in 0..episodes.size - 1) {
+                        Text(
+                            text = episodes[i].toString(),
+                            fontSize = 14.sp,
+                            maxLines = 3,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clickable {
+                                    changeQuality(episodes[i])
+                                }
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .background(Color(0xFFE0E0E0))
+                                .padding(8.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun ChooseEpisodeDialog(
     episodes: List<Episode>,
     dismissDialog: () -> Unit,
     chooseEpisode: (episodeNumber: Int) -> Unit
 ) {
     var openDialog by remember { mutableStateOf(true) }
-
     if (openDialog) {
         Dialog(
             onDismissRequest = {
@@ -96,7 +144,9 @@ fun ChooseEpisodeDialog(
 
 @Composable
 fun TopBarPlayer(
-    modifier: Modifier, release: Release, episode: Int,
+    modifier: Modifier,
+    release: Release?,
+    episode: Int,
     onBackClick: () -> Unit,
     translateToScreen: () -> Unit,
     showEpisodeList: () -> Unit
@@ -108,58 +158,60 @@ fun TopBarPlayer(
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { onBackClick() }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_arrow_back_24),
-                contentDescription = "",
-                tint = PlayerColor
-            )
-        }
-        IconButton(onClick = { }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_arrow_back_24),
-                contentDescription = "",
-                tint = TransparentColor
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = release.name,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
-            val name =
-                stringResource(
-                    R.string.series, (episode + 1).toString(), release.episodes[episode].name
+        release?.let {
+            IconButton(onClick = { onBackClick() }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_arrow_back_24),
+                    contentDescription = "",
+                    tint = PlayerColor
                 )
-            Text(
-                text = name,
-                color = Color.LightGray,
-                fontSize = 14.sp
-            )
-        }
-        IconButton(onClick = {
-            translateToScreen()
-        }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_cast_24),
-                contentDescription = "Меню",
-                tint = PlayerColor
-            )
-        }
-        IconButton(onClick = {
-            showEpisodeList()
-        }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_playlist_play_24),
-                contentDescription = "Меню",
-                tint = PlayerColor
-            )
+            }
+            IconButton(onClick = { }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_arrow_back_24),
+                    contentDescription = "",
+                    tint = TransparentColor
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = release.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                val name =
+                    stringResource(
+                        R.string.series, (episode + 1).toString(), release.episodes[episode].name
+                    )
+                Text(
+                    text = name,
+                    color = Color.LightGray,
+                    fontSize = 14.sp
+                )
+            }
+            IconButton(onClick = {
+                translateToScreen()
+            }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_cast_24),
+                    contentDescription = "Меню",
+                    tint = PlayerColor
+                )
+            }
+            IconButton(onClick = {
+                showEpisodeList()
+            }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_playlist_play_24),
+                    contentDescription = "Меню",
+                    tint = PlayerColor
+                )
+            }
         }
     }
 }

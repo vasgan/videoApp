@@ -9,5 +9,6 @@ import androidx.room.PrimaryKey
 data class WatchListItem (
     @PrimaryKey
     val id: String,
-    val name: String)
+    val name: String,
+    val imageUrl: String,)
 

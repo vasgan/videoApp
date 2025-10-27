@@ -9,4 +9,7 @@
     <string name="series">Серия %1$s %2$s</string>
     <string name="history">История просмотров</string>
     <string name="settings">Настройки</string>
+    <string name="you_stop">Вы остановились %1$s эпизоде</string>
+    <string name="aniliberty">AnilLiberty</string>
+    <string name="dreamcast">DreamCast</string>
 </resources>

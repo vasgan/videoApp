@@ -4,8 +4,8 @@ import com.example.myapplication.data.db.watch_list.WatchListDao
 import com.example.myapplication.data.db.watch_list.WatchListItem
 
 class WatchListRepositoryImpl(val watchDB: WatchListDao) : WatchListRepository {
-    override suspend fun addToWatchList(id: Int, name: String) {
-        watchDB.upsert(WatchListItem(id.toString(), name))
+    override suspend fun addToWatchList(id: Int, name: String, imageUrl: String) {
+        watchDB.upsert(WatchListItem(id.toString(), name, imageUrl))
     }
 
     override suspend fun removeFromWatchList(id: Int) {

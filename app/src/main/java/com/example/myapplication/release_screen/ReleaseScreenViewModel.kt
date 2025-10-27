@@ -131,9 +131,10 @@ class ReleaseScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val id = _uiState.value?.id?.toInt()
             val name = _uiState.value?.name
-            if (id != null && name != null)
+            val poster = _uiState.value?.poster
+            if (id != null && name != null && poster != null)
                 if (!_uiStateFavorite.value) {
-                    favoriteRepository.addFavorite(id, name)
+                    favoriteRepository.addFavorite(id, name, poster)
                     _uiStateFavorite.value = true
                 } else {
                     favoriteRepository.removeFavorite(id)
@@ -146,9 +147,10 @@ class ReleaseScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val id = _uiState.value?.id?.toInt()
             val name = _uiState.value?.name
-            if (id != null && name != null)
+            val poster = _uiState.value?.poster
+            if (id != null && name != null && poster != null)
                 if (!_uiStateWatchList.value) {
-                    watchListRepository.addToWatchList(id, name)
+                    watchListRepository.addToWatchList(id, name, poster)
                     _uiStateWatchList.value = true
                 } else {
                     watchListRepository.removeFromWatchList(id)

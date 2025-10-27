@@ -21,6 +21,11 @@ class DreamCastRepositoryImpl: DreamCastRepository {
         return getHtml(urlRelease)
     }
 
+    override suspend fun getReleases(): List<DreamCastReleaseElement> {
+        return fetchReleasesBySearch("")
+    }
+
+
     private suspend fun fetchReleasesBySearch(searchString: String): List<DreamCastReleaseElement> =
         withContext(Dispatchers.IO) {
             val url = "https://dreamerscast.com/?search=$searchString&pageSize=20&pageNumber=1"

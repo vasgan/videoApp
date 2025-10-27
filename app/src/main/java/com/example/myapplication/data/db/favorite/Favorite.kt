@@ -9,4 +9,5 @@ import androidx.room.PrimaryKey
 data class Favorite (
     @PrimaryKey
     val id: Int,
-    val name: String)
+    val name: String,
+    val imageUrl: String)

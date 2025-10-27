@@ -1,9 +1,7 @@
 package com.example.myapplication
 
-import android.os.Bundle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE

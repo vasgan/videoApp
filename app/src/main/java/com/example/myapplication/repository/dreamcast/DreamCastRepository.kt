@@ -6,4 +6,6 @@ interface DreamCastRepository {
     suspend fun searchOnDreamCast(search: String): List<DreamCastReleaseElement>
 
     suspend fun getVideoUrls(urlRelease: String): List<String>
+
+    suspend fun getReleases(): List<DreamCastReleaseElement>
 }

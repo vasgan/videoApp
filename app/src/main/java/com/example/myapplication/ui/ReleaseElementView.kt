@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
+import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 
 
 @Composable
@@ -46,6 +47,49 @@ fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> U
         )
         Text(
             text = item.description + " ",//todo выпилить нормально чекать на нулл
+            modifier = Modifier
+                .constrainAs(description) {
+                    top.linkTo(title.bottom)
+                    start.linkTo(image.end)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+            maxLines = 4
+        )
+    }
+}
+
+@Composable
+fun ReleaseElementViewDreamCast(item: DreamCastReleaseElement, onItemClick: (String) -> Unit) {
+    ConstraintLayout(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onItemClick(item.id) }) {
+        val (image, title, description) = createRefs()
+        ShimmerImage("https://" + item.image,
+            Modifier.constrainAs(image) {
+                width = Dimension.value(120.dp)
+                top.linkTo(parent.top)
+                start.linkTo(parent.start)
+            }, ContentScale.FillWidth, 8
+        )
+        Text(
+            text = item.russian,
+            modifier = Modifier
+                .constrainAs(title) {
+                    top.linkTo(parent.top)
+                    start.linkTo(image.end)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(PaddingValues(16.dp, 0.dp, 16.dp, 0.dp)),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 3
+        )
+        Text(
+            text = item.genres + " ",//todo выпилить нормально чекать на нулл
             modifier = Modifier
                 .constrainAs(description) {
                     top.linkTo(title.bottom)

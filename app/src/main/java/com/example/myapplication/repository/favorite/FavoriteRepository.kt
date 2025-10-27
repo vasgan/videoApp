@@ -4,7 +4,7 @@ import com.example.myapplication.data.db.favorite.Favorite
 
 interface FavoriteRepository {
 
-    suspend fun addFavorite(id: Int, name: String)
+    suspend fun addFavorite(id: Int, name: String, imageUrl: String)
 
     suspend fun removeFavorite(id: Int)
 
