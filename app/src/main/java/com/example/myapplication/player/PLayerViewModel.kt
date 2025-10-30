@@ -143,11 +143,12 @@ class PLayerViewModel @Inject constructor(
         _uiStatePlayerSeek.value = SeekToState.OnNext()
     }
 
-    fun updateHistory(position: Long) {
+    fun updateHistory(position: Long, doubers: String) {
         viewModelScope.launch {
             historyRepository.addToHistory(
                 History(
                     uiStateRelease.value?.id?.toInt() ?: 0,
+                    doubers,
                     uiStateRelease.value?.name ?: "",
                     uiStateEpisode.value.toString(),
                     uiStateEpisode.value,

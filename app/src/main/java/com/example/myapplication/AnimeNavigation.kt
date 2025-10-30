@@ -7,6 +7,7 @@ import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
 import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
@@ -44,6 +45,7 @@ object AnimeDestinationsArgs {
     const val GENRE_ID_ARG = "genreId"
     const val PLAYER_URLS = "urls"
     const val RELEASE_EPISODE = "release_episode"
+    const val DOUBERS = "doubers"
     const val DREAMCAST_RELEASE_EPISODE = "dreamcast_release_episode"
 }
 
@@ -79,10 +81,11 @@ class AnimeNavigation(private val navController: NavController) {
         navController.navigate(RELEASE_DREAMCAST_SCREEN_ROUTE)
     }
 
-    fun navigateToPlayerScreen(enterEpisode: Int, release: Release) {
+    fun navigateToPlayerScreen(enterEpisode: Int, release: Release, doubers: String) {
         navController.currentBackStackEntry
             ?.savedStateHandle
             ?.set(RELEASE_EPISODE, release)
+        navController.currentBackStackEntry?.savedStateHandle?.set(DOUBERS, doubers)
         navController.navigate(
             route = PLAYER_SCREEN.let {
                 "$it?$PLAYER_URLS=${enterEpisode}"

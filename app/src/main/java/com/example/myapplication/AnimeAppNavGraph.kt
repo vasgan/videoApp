@@ -27,11 +27,14 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.myapplication.AnimeDestinations.MAIN_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
 import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
+import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
+import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.data.parse.dreamcast.mapToRelease
 import com.example.myapplication.data.ui_data.Episode
@@ -160,16 +163,19 @@ fun AnimeAppNavGraph(
                 val release = navController.previousBackStackEntry?.savedStateHandle?.get<Release>(
                     RELEASE_EPISODE
                 )
+                val doubers = navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS) + ""
                 val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
                 val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
                     PlayerScreen(
-                        episodeId ?: 0,
-                        viewModel,
-                        release,
+                        episodeCount = episodeId ?: 0,
+                        viewModel =viewModel,
+                        releaseBase = release,
                         onBackClick = {
                             navController.popBackStack()
-                        }, mediaSession = mediaSession
+                        },
+                        mediaSession = mediaSession,
+                        doubers = doubers
                     )
                 }
             }
@@ -223,7 +229,7 @@ fun AnimeAppNavGraph(
                         release,
                         {}, { episodeNum, dreamCastRelease, dreamCastSeries ->
                             navActions.navigateToPlayerScreen(episodeNum, mapToRelease(dreamCastSeries,
-                                dreamCastRelease))
+                                dreamCastRelease), DREAM_CAST)
                         }, {
                             navController.popBackStack()
                         })
@@ -245,7 +251,7 @@ fun AnimeAppNavGraph(
                         }, onGenreClick = {
                             navActions.navigateFromReleaseToGenreSearch(it)
                         }, onEpisodeClick = { episode, release ->
-                            navActions.navigateToPlayerScreen(episode, release)
+                            navActions.navigateToPlayerScreen(episode, release, ANILIBERTY)
                         }, onBackClick = {
                             navController.popBackStack()
                         })

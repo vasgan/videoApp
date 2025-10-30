@@ -3,12 +3,14 @@ package com.example.myapplication.data.db.history
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+
 @Entity(
-    tableName = "history"
+    tableName = "history",
+    primaryKeys = ["releaseId", "doubers"]
 )
 data class History(
-    @PrimaryKey
     val releaseId: Int,
+    val doubers: String,
     val releaseName: String,
     val episodeId: String,
     val episodeNumber: Int,
@@ -16,3 +18,9 @@ data class History(
     val dateUpdate: Long,
     val imageUrl: String,
 )
+{
+    companion object {
+        const val ANILIBERTY = "aniliberty"
+        const val DREAM_CAST = "dream_cast"
+    }
+}

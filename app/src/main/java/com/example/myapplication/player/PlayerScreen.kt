@@ -2,7 +2,6 @@ package com.example.myapplication.player
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
-import android.util.Log
 import android.util.Rational
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -62,6 +61,7 @@ fun PlayerScreen(
     episodeCount: Int,
     viewModel: PLayerViewModel,
     releaseBase: Release,
+    doubers: String,
     mediaSession: MediaSession?,
     onBackClick: () -> Unit
 ) {
@@ -134,7 +134,7 @@ fun PlayerScreen(
             ) {
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                     wasSeek = true
-                    viewModel.updateHistory(exoPlayer.currentPosition)
+                    viewModel.updateHistory(exoPlayer.currentPosition, doubers)
                 }
             }
 
@@ -143,11 +143,11 @@ fun PlayerScreen(
                     wasSeek = false
                     viewModel.draggingEnd()
                 }
-                viewModel.updateHistory(exoPlayer.currentPosition)
+                viewModel.updateHistory(exoPlayer.currentPosition, doubers)
             }
         })
         onDispose {
-            viewModel.updateHistory(exoPlayer.currentPosition)
+            viewModel.updateHistory(exoPlayer.currentPosition, doubers)
             activity?.setFullscreen(true)
             mediaSession.release()
             exoPlayer.release()

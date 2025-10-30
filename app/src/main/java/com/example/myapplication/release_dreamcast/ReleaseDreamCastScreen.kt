@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,7 +64,9 @@ fun ReleaseDreamCastScreen(
     onBackClick: () -> Unit
 ) {
     viewModel.getSeriesList("https://dreamerscast.com" + dreamCastRelease.url)
+    viewModel.getHistory(dreamCastRelease.id.toInt())
     val model by viewModel.uiState.collectAsStateWithLifecycle()
+    val history by viewModel.uiStateHistory.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = Modifier
             .padding(innerPadding)
@@ -77,6 +80,31 @@ fun ReleaseDreamCastScreen(
                     .wrapContentHeight(),
                 ContentScale.Crop, 0
             )
+            FilledTonalButton(
+                modifier = Modifier
+                    .padding(
+                        top = 8.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 0.dp
+                    )
+                    .fillMaxWidth(), onClick = {
+                    model?.let {
+                        if (history == null)
+                            onEpisodeClick(0, dreamCastRelease, it)
+                        else
+                            onEpisodeClick(history!!.episodeNumber, dreamCastRelease, it)
+                    }
+                }) {
+                if (history == null)
+                    Text(LocalContext.current.getString(R.string.start_watching))
+                else Text(
+                    LocalContext.current.getString(
+                        R.string.contine_watching,
+                        (history!!.episodeNumber + 1).toString()
+                    )
+                )
+            }
             //Заголовок
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

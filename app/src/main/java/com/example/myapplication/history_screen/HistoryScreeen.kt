@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
+import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
 import com.example.myapplication.ui.ShimmerImage
 import com.example.myapplication.ui.SimpleTopBar
 
@@ -42,16 +43,16 @@ fun HistoryScreen(
                     .padding(innerPaddingValues)
                     .fillMaxSize()
             ) {
-                history?.let {
-                    items(it.size) { i ->
+                history?.let { history ->
+                    items(history.size) { i ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onItemClick(history!![i].releaseId.toString())
+                                    onItemClick(history[i].releaseId.toString())
                                 }) {
-                            ShimmerImage(
-                                "https://aniliberty.top/" + history!![i].imageUrl,
+                            ShimmerImage( if (history[i].doubers == ANILIBERTY)
+                                "https://aniliberty.top/" + history[i].imageUrl else "https:" + history[i].imageUrl,
                                 Modifier
                                     .width(120.dp)
                                     .wrapContentHeight()
@@ -61,7 +62,7 @@ fun HistoryScreen(
                             )
                             Column {
                                 Text(
-                                    text = history!![i].releaseName,
+                                    text = history[i].releaseName,
                                     modifier = Modifier
                                         .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
                                     style = TextStyle(
@@ -71,7 +72,7 @@ fun HistoryScreen(
                                 )
                                 Text(
                                     text = stringResource(
-                                        R.string.you_stop, history!![i].episodeNumber
+                                        R.string.you_stop, history[i].episodeNumber + 1
                                     ),
                                     modifier = Modifier
                                         .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
