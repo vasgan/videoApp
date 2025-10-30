@@ -1,7 +1,13 @@
 package com.example.myapplication.data.parse.dreamcast
 
 import android.os.Parcelable
+import com.example.myapplication.data.ui_data.Episode
+import com.example.myapplication.data.ui_data.Franchise
+import com.example.myapplication.data.ui_data.Genres
+import com.example.myapplication.data.ui_data.Release
+import com.example.myapplication.data.ui_data.SkipTime
 import kotlinx.parcelize.Parcelize
+import kotlin.collections.get
 
 @Parcelize
 data class DreamCastReleaseElement(
@@ -28,3 +34,40 @@ data class DreamCastReleaseElement(
     val rating: String,
     val date: String,
     val update: String): Parcelable
+
+
+fun mapToRelease(dreamCastSeries: DreamCastDescriptionAndSeries, dreamCastRelease: DreamCastReleaseElement): Release {
+    val episode = mutableListOf<Episode>()
+    for (i in 0..dreamCastSeries.series.size - 1) {
+        episode.add(
+            Episode(
+                "",
+                "",
+                i,
+                dreamCastSeries.series[i],
+                dreamCastSeries.series[i],
+                dreamCastSeries.series[i],
+                0,
+                SkipTime(0, 0),
+                SkipTime(0, 0),
+                dreamCastRelease.image,
+                i,
+                dreamCastRelease.id
+            )
+        )
+    }
+    return Release(
+        dreamCastRelease.id,
+        dreamCastRelease.russian + "",
+        dreamCastRelease.image + "",
+        dreamCastSeries.description + "",
+        dreamCastRelease.date + "",
+        listOf<Genres>(),
+        dreamCastRelease.timers + "",
+        dreamCastRelease.type + "",
+        dreamCastRelease.duration + "",
+        listOf<Franchise>(),
+        episode,
+        false
+    )
+}

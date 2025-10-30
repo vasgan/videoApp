@@ -33,7 +33,12 @@ import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.data.parse.dreamcast.mapToRelease
+import com.example.myapplication.data.ui_data.Episode
+import com.example.myapplication.data.ui_data.Franchise
+import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
+import com.example.myapplication.data.ui_data.SkipTime
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.history_screen.HistoryScreen
@@ -54,6 +59,7 @@ import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreen
 import com.example.myapplication.watch.WatchScreenViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlin.String
 
 sealed class Root(val route: String, val label: String, val icon: Int) {
     data object Home : Root(MAIN_SCREEN_ROUTE, "Home", R.drawable.baseline_home_24)
@@ -121,7 +127,7 @@ fun AnimeAppNavGraph(
                 ListScreen(
                     PaddingValues(
                         16.dp,
-                        innerPadding.calculateTopPadding(),
+                        24.dp,
                         16.dp,
                         innerPadding.calculateBottomPadding()
                     ), viewModel, {
@@ -198,22 +204,26 @@ fun AnimeAppNavGraph(
                 )
             }
 
-            composable(AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE){
-                val release = navController.previousBackStackEntry?.savedStateHandle?.get<DreamCastReleaseElement>(
-                    DREAMCAST_RELEASE_EPISODE
-                )
+            composable(AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE) {
+                val release =
+                    navController.previousBackStackEntry?.savedStateHandle?.get<DreamCastReleaseElement>(
+                        DREAMCAST_RELEASE_EPISODE
+                    )
                 val viewModel: ReleaseDreamCastViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
                     ReleaseDreamCastScreen(
                         PaddingValues(
-                        0.dp,
-                        0.dp,//innerPadding.calculateTopPadding(),
-                        0.dp,
-                        innerPadding.calculateBottomPadding()),
-                           viewModel,
-                            release,
-                            {},{
-                        },{
+                            0.dp,
+                            0.dp,
+                            0.dp,
+                            innerPadding.calculateBottomPadding()
+                        ),
+                        viewModel,
+                        release,
+                        {}, { episodeNum, dreamCastRelease, dreamCastSeries ->
+                            navActions.navigateToPlayerScreen(episodeNum, mapToRelease(dreamCastSeries,
+                                dreamCastRelease))
+                        }, {
                             navController.popBackStack()
                         })
                 }

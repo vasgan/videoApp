@@ -1,6 +1,7 @@
 package com.example.myapplication.release_dreamcast
 
 import android.annotation.SuppressLint
+import android.text.Html
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,16 +36,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
+import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.ui.ShimmerImage
 
@@ -55,7 +59,7 @@ fun ReleaseDreamCastScreen(
     viewModel: ReleaseDreamCastViewModel,
     dreamCastRelease: DreamCastReleaseElement,
     onReleaseClick: (String) -> Unit,
-    onEpisodeClick: (Int) -> Unit,
+    onEpisodeClick: (Int, DreamCastReleaseElement, DreamCastDescriptionAndSeries) -> Unit,
     onBackClick: () -> Unit
 ) {
     viewModel.getSeriesList("https://dreamerscast.com" + dreamCastRelease.url)
@@ -110,7 +114,6 @@ fun ReleaseDreamCastScreen(
                     contentScale = ContentScale.Crop
                 )
             }
-            //Разделитель
             HorizontalDivider(
                 modifier = Modifier
                     .padding(PaddingValues(16.dp, 0.dp, 16.dp, 16.dp))
@@ -118,7 +121,6 @@ fun ReleaseDreamCastScreen(
                     .width(1.dp),
                 color = Color.LightGray
             )
-            //Описание
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -135,20 +137,38 @@ fun ReleaseDreamCastScreen(
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                         append(LocalContext.current.getString(R.string.episode_count) + " ")
                     }
-                    append(LocalContext.current.getString(
-                        R.string.episodes,
-                        dreamCastRelease.series,
-                        dreamCastRelease.currentSeries))
+                    append(
+                        LocalContext.current.getString(
+                            R.string.episodes,
+                            dreamCastRelease.series,
+                            dreamCastRelease.currentSeries
+                        )
+                    )
                 }, modifier = Modifier
                     .padding(PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)),
                 style = MaterialTheme.typography.bodyLarge
             )
+            if (model?.description != null)
+                Text(
+                    text = AnnotatedString.fromHtml(
+                        Html.fromHtml(
+                            model?.description,
+                            Html.FROM_HTML_MODE_LEGACY
+                        ).toString()
+                    ),
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 16.sp
+                    ),
+                    modifier = Modifier
+                        .padding(PaddingValues(16.dp, 16.dp, 16.dp, 16.dp)),
+                )
         }
 
-        model?.size?.let { it1 ->
+        model?.series?.size?.let { it1 ->
             items(it1) { i ->
                 EpisodeItem((i + 1).toString(), {
-                    //todo
+                    onEpisodeClick(i, dreamCastRelease, model!!)
                 })
             }
 

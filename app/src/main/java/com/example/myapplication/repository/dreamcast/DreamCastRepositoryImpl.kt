@@ -1,7 +1,9 @@
 package com.example.myapplication.repository.dreamcast
 
+import android.text.Html
 import android.util.Base64
 import com.example.myapplication.data.parse.dreamcast.BaseDreamCastSearch
+import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +19,7 @@ class DreamCastRepositoryImpl: DreamCastRepository {
         return fetchReleasesBySearch(search)
     }
 
-    override suspend fun getVideoUrls(urlRelease: String): List<String> {
+    override suspend fun getVideoUrls(urlRelease: String): DreamCastDescriptionAndSeries {
         return getHtml(urlRelease)
     }
 
@@ -40,9 +42,10 @@ class DreamCastRepositoryImpl: DreamCastRepository {
             Gson().fromJson(html, BaseDreamCastSearch::class.java).releases
         }
 
-    private suspend fun getHtml(url: String): List<String> {
+    private suspend fun getHtml(url: String): DreamCastDescriptionAndSeries {
         var html = ""
         var strings = emptyList<String>()
+        var descriptionText = ""
         val client = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
@@ -58,14 +61,18 @@ class DreamCastRepositoryImpl: DreamCastRepository {
                 if (!resp.isSuccessful) error("HTTP ${resp.code}")
                 html = resp.body.string() // автоматически разжимает gzip/deflate
             }
-            val first = html.lastIndexOf("atob(\"")
-            val second = html.lastIndexOf("\").split('||||')")
+
+            val firstDes = html.indexOf("description\" content=\"")
+            val secondDes = html.indexOf("\">", firstDes)
+            descriptionText = html.substring(firstDes + "description\" content=\"".length, secondDes)
+            val first = html.indexOf("atob(\"", secondDes)
+            val second = html.indexOf("\").split('||||')", first)
             if (first < second) {
                 val str = html.substring(first + 6, second)
                 strings = decodeBase64(str).split("||||")
             }
         }
-        return strings
+        return DreamCastDescriptionAndSeries(strings, descriptionText)
     }
 
     private fun decodeBase64(encoded: String): String {

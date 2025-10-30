@@ -1,5 +1,6 @@
 package com.example.myapplication.main_screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,6 +82,7 @@ fun ListScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
+                Log.e("ololololo", innerPadding.toString())
                 when (page) {
                     0 -> LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -100,7 +102,6 @@ fun ListScreen(
                         items(itemsDreamCast.size) { item ->
                             ReleaseElementViewDreamCast(itemsDreamCast[item]) {
                                 onDreamCastItemClick(itemsDreamCast[item])
-                             //   viewModel.getDreamCastUrls("https://dreamerscast.com/" + itemsDreamCast[item].url)
                             }
                         }
                     }
