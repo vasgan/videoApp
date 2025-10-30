@@ -27,10 +27,12 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.myapplication.AnimeDestinations.MAIN_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
+import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
@@ -41,6 +43,8 @@ import com.example.myapplication.main_screen.ListScreen
 import com.example.myapplication.player.PLayerViewModel
 import com.example.myapplication.player.PlayerScreen
 import com.example.myapplication.profile_screen.ProfileScreen
+import com.example.myapplication.release_dreamcast.ReleaseDreamCastScreen
+import com.example.myapplication.release_dreamcast.ReleaseDreamCastViewModel
 import com.example.myapplication.release_screen.ReleaseScreen
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreen
@@ -122,8 +126,11 @@ fun AnimeAppNavGraph(
                         innerPadding.calculateBottomPadding()
                     ), viewModel, {
                         navActions.navigateToRelease(it)
+                    }, {
+                        navActions.navigateToDreamCastRelease(it)
                     })
             }
+
             composable(Root.Search.route) { entry ->
                 val viewModel: SearchScreenViewModel = viewModel(factory = viewModelFactory)
                 val genre = entry.arguments?.getString(GENRE_ID_ARG)
@@ -140,6 +147,8 @@ fun AnimeAppNavGraph(
                     }
                 )
             }
+
+
 
             composable(PLAYER_SCREEN_ROUTE) { entry ->
                 val release = navController.previousBackStackEntry?.savedStateHandle?.get<Release>(
@@ -187,6 +196,27 @@ fun AnimeAppNavGraph(
                         navActions.navigateToSettingsScreen()
                     }
                 )
+            }
+
+            composable(AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE){
+                val release = navController.previousBackStackEntry?.savedStateHandle?.get<DreamCastReleaseElement>(
+                    DREAMCAST_RELEASE_EPISODE
+                )
+                val viewModel: ReleaseDreamCastViewModel = viewModel(factory = viewModelFactory)
+                release?.let {
+                    ReleaseDreamCastScreen(
+                        PaddingValues(
+                        0.dp,
+                        0.dp,//innerPadding.calculateTopPadding(),
+                        0.dp,
+                        innerPadding.calculateBottomPadding()),
+                           viewModel,
+                            release,
+                            {},{
+                        },{
+                            navController.popBackStack()
+                        })
+                }
             }
 
             composable(AnimeDestinations.CURRENT_RELEASE_ROUTE) { entry ->

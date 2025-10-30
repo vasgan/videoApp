@@ -9,10 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import com.example.myapplication.R
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 
@@ -66,8 +68,9 @@ fun ReleaseElementViewDreamCast(item: DreamCastReleaseElement, onItemClick: (Str
         Modifier
             .fillMaxWidth()
             .clickable { onItemClick(item.id) }) {
-        val (image, title, description) = createRefs()
-        ShimmerImage("https://" + item.image,
+        val (image, title, genres, episodes) = createRefs()
+        ShimmerImage(
+            "https://" + item.image,
             Modifier.constrainAs(image) {
                 width = Dimension.value(120.dp)
                 top.linkTo(parent.top)
@@ -89,10 +92,25 @@ fun ReleaseElementViewDreamCast(item: DreamCastReleaseElement, onItemClick: (Str
             maxLines = 3
         )
         Text(
-            text = item.genres + " ",//todo выпилить нормально чекать на нулл
+            text = item.genres + "",
             modifier = Modifier
-                .constrainAs(description) {
+                .constrainAs(genres) {
                     top.linkTo(title.bottom)
+                    start.linkTo(image.end)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+            maxLines = 4
+        )
+        Text(
+            text = LocalContext.current.getString(
+                R.string.episodes,
+                item.series,
+                item.currentSeries),
+            modifier = Modifier
+                .constrainAs(episodes) {
+                    top.linkTo(genres.bottom)
                     start.linkTo(image.end)
                     end.linkTo(parent.end)
                     width = Dimension.fillToConstraints

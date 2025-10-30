@@ -4,8 +4,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
@@ -16,9 +18,11 @@ import com.example.myapplication.AnimeScreens.HISTORY_SCREEN
 import com.example.myapplication.AnimeScreens.MAIN_SCREEN
 import com.example.myapplication.AnimeScreens.PLAYER_SCREEN
 import com.example.myapplication.AnimeScreens.PROFILE_SCREEN
+import com.example.myapplication.AnimeScreens.RELEASE_DREAM_CAST_SCREEN
 import com.example.myapplication.AnimeScreens.SEARCH_SCREEN
 import com.example.myapplication.AnimeScreens.SETTINGS_SCREEN
 import com.example.myapplication.AnimeScreens.WILL_WATCH_SCREEN
+import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.data.ui_data.Release
 
 
@@ -32,6 +36,7 @@ private object AnimeScreens {
     const val PLAYER_SCREEN = "player_screen"
     const val HISTORY_SCREEN = "history_screen"
     const val SETTINGS_SCREEN = "settings_screen"
+    const val RELEASE_DREAM_CAST_SCREEN = "release_dreamcast_screen"
 }
 
 object AnimeDestinationsArgs {
@@ -39,6 +44,7 @@ object AnimeDestinationsArgs {
     const val GENRE_ID_ARG = "genreId"
     const val PLAYER_URLS = "urls"
     const val RELEASE_EPISODE = "release_episode"
+    const val DREAMCAST_RELEASE_EPISODE = "dreamcast_release_episode"
 }
 
 object AnimeDestinations {
@@ -51,6 +57,7 @@ object AnimeDestinations {
     const val HISTORY_SCREEN_ROUTE = HISTORY_SCREEN
     const val SETTINGS_SCREEN_ROUTE = SETTINGS_SCREEN
     const val PLAYER_SCREEN_ROUTE = "$PLAYER_SCREEN?$PLAYER_URLS={$PLAYER_URLS}"
+    const val RELEASE_DREAMCAST_SCREEN_ROUTE = RELEASE_DREAM_CAST_SCREEN
 }
 
 class AnimeNavigation(private val navController: NavController) {
@@ -63,6 +70,13 @@ class AnimeNavigation(private val navController: NavController) {
             popUpTo(navController.graph.findStartDestination().id)
             launchSingleTop = true
         }
+    }
+
+    fun navigateToDreamCastRelease(release: DreamCastReleaseElement){
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(DREAMCAST_RELEASE_EPISODE, release)
+        navController.navigate(RELEASE_DREAMCAST_SCREEN_ROUTE)
     }
 
     fun navigateToPlayerScreen(enterEpisode: Int, release: Release) {

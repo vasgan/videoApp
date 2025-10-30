@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import com.example.myapplication.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.ui.ReleaseElementView
 import com.example.myapplication.ui.ReleaseElementViewDreamCast
 import kotlinx.coroutines.launch
@@ -33,7 +34,8 @@ import kotlinx.coroutines.launch
 fun ListScreen(
     innerPadding: PaddingValues,
     viewModel: MainViewModel,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onDreamCastItemClick:(DreamCastReleaseElement) -> Unit
 ) {
     viewModel.getAnilibertyLastReleases()
     viewModel.getDreamCastReleases()
@@ -97,7 +99,8 @@ fun ListScreen(
                     ) {
                         items(itemsDreamCast.size) { item ->
                             ReleaseElementViewDreamCast(itemsDreamCast[item]) {
-                                viewModel.getDreamCastUrls("https://dreamerscast.com/" + itemsDreamCast[item].url)
+                                onDreamCastItemClick(itemsDreamCast[item])
+                             //   viewModel.getDreamCastUrls("https://dreamerscast.com/" + itemsDreamCast[item].url)
                             }
                         }
                     }

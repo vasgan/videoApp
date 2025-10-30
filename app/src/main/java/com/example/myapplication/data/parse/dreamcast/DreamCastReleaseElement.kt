@@ -1,5 +1,9 @@
 package com.example.myapplication.data.parse.dreamcast
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class DreamCastReleaseElement(
     val id: String,
     val russian: String,
@@ -23,5 +27,4 @@ data class DreamCastReleaseElement(
     val views: String,
     val rating: String,
     val date: String,
-    val update: String) {
-}
+    val update: String): Parcelable
