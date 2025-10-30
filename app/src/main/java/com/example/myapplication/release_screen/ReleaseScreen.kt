@@ -1,5 +1,6 @@
 package com.example.myapplication.release_screen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +18,18 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -53,6 +59,7 @@ import com.example.myapplication.ui.ShimmerImage
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
 
+@SuppressLint("StringFormatMatches")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReleaseScreen(
@@ -62,14 +69,15 @@ fun ReleaseScreen(
     onReleaseClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
     onEpisodeClick: (Int, Release) -> Unit,
-    onBackClick:() -> Unit
+    onBackClick: () -> Unit
 ) {
-    viewModel.getCurrentRelease(id)
     val model by viewModel.uiState.collectAsStateWithLifecycle()
     val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
     val watchList by viewModel.watchListUIState.collectAsStateWithLifecycle()
+    val history by viewModel.uiStateHistory.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = context.findActivity()
+    viewModel.getCurrentRelease(id)
     LaunchedEffect(Unit) {
         activity?.setFullscreen(false)
     }
@@ -86,7 +94,27 @@ fun ReleaseScreen(
                     .wrapContentHeight(),
                 ContentScale.Crop, 0
             )
-            //Заголовок
+            FilledTonalButton(
+                modifier = Modifier
+                    .padding(
+                        top = 8.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 0.dp
+                    )
+                    .fillMaxWidth(), onClick = {
+                    model?.let {
+                        if (history == null)
+                            onEpisodeClick(0, it)
+                        else
+                            onEpisodeClick(history!!.episodeNumber, it)
+                    }
+                }) {
+                if (history == null)
+                    Text(context.getString(R.string.start_watching))
+                else Text(context.getString(R.string.contine_watching, (history!!.episodeNumber + 1).toString()))
+            }
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()

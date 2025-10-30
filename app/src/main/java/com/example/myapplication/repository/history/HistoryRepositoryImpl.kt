@@ -8,21 +8,6 @@ import com.example.myapplication.repository.favorite.FavoriteRepository
 
 class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
 
-/*    override suspend fun addFavorite(id: Int, name: String) {
-        favoriteDB.upsert(Favorite(id, name))
-    }
-
-    override suspend fun removeFavorite(id: Int) {
-        favoriteDB.deleteById(id)
-    }
-
-    override suspend  fun getFavorites(): List<Favorite>? {
-        return favoriteDB.getFavorites()
-    }
-
-    override suspend fun getFavorite(id: Int): Favorite? {
-        return favoriteDB.getFavorite(id)
-    }*/
 
     override suspend fun addToHistory(history: History) {
         historyDb.upsert(history)
@@ -30,5 +15,9 @@ class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
 
     override suspend fun getHistory(): List<History>? {
         return historyDb.getHistories()
+    }
+
+    override suspend fun getHistoryRelease(releaseId: Int): History? {
+        return historyDb.getHistory(releaseId)
     }
 }

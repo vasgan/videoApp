@@ -163,9 +163,10 @@ fun AnimeAppNavGraph(
                 val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
                 val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
-                    episodeId?.let { episode -> viewModel.initViewModel(episode, it) }
                     PlayerScreen(
-                        episodeId ?: 0, viewModel,
+                        episodeId ?: 0,
+                        viewModel,
+                        release,
                         onBackClick = {
                             navController.popBackStack()
                         }, mediaSession = mediaSession

@@ -82,7 +82,6 @@ fun ListScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Log.e("ololololo", innerPadding.toString())
                 when (page) {
                     0 -> LazyColumn(
                         modifier = Modifier.fillMaxSize(),

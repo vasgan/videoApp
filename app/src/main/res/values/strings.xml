@@ -14,4 +14,6 @@
     <string name="dreamcast">DreamCast</string>
     <string name="episodes">%1$s из %2$s</string>
     <string name="episode_count">Эпизоды:</string>
+    <string name="start_watching">Начать просмотр</string>
+    <string name="contine_watching">Продолжить просмотр с %1$s серии</string>
 </resources>

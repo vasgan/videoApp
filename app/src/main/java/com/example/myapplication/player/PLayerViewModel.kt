@@ -54,6 +54,9 @@ class PLayerViewModel @Inject constructor(
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
 
+    private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
+    val uiStateHistory: StateFlow<History?> =_uiStateHistory.asStateFlow()
+
     private var hideViewsJob: Job? = null
 
     fun initViewModel(episode: Int, release: Release) {
@@ -62,6 +65,9 @@ class PLayerViewModel @Inject constructor(
         viewModelScope.launch {
             if (favoriteRepository.getFavorite(release.id.toInt()) != null)
                 _uiStateFavorite.value = true
+        }
+        viewModelScope.launch {
+            _uiStateHistory.value = historyRepository.getHistoryRelease(release.id.toInt())
         }
     }
 
@@ -137,9 +143,8 @@ class PLayerViewModel @Inject constructor(
         _uiStatePlayerSeek.value = SeekToState.OnNext()
     }
 
-    fun changePosition(position: Long) {
-        _uiStatePosition.value = position
-        viewModelScope.launch {//todo переписать
+    fun updateHistory(position: Long) {
+        viewModelScope.launch {
             historyRepository.addToHistory(
                 History(
                     uiStateRelease.value?.id?.toInt() ?: 0,
@@ -152,6 +157,10 @@ class PLayerViewModel @Inject constructor(
                 )
             )
         }
+    }
+
+    fun changePosition(position: Long) {
+        _uiStatePosition.value = position
     }
 
     fun seekEnd() {

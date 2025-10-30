@@ -3,6 +3,7 @@ package com.example.myapplication.release_screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.favorite.Favorite
+import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.network.responses.BaseFranchiseResponse
 import com.example.myapplication.data.network.responses.EpisodeResponse
 import com.example.myapplication.data.network.responses.FranchiseResponse
@@ -14,6 +15,7 @@ import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.data.ui_data.SkipTime
 import com.example.myapplication.repository.favorite.FavoriteRepository
+import com.example.myapplication.repository.history.HistoryRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import com.example.myapplication.repository.watch_list.WatchListRepository
 import kotlinx.coroutines.async
@@ -26,7 +28,8 @@ import javax.inject.Inject
 class ReleaseScreenViewModel @Inject constructor(
     private val repository: ReleaseRepository,
     private val favoriteRepository: FavoriteRepository,
-    private val watchListRepository: WatchListRepository
+    private val watchListRepository: WatchListRepository,
+    private val watchHistoryRepository: HistoryRepository
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<Release?> = MutableStateFlow(null)
     val uiState: StateFlow<Release?> = _uiState.asStateFlow()
@@ -37,7 +40,11 @@ class ReleaseScreenViewModel @Inject constructor(
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
 
+    private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
+    val uiStateHistory: StateFlow<History?> = _uiStateHistory.asStateFlow()
+
     fun getCurrentRelease(id: String) {
+        getHistory(id.toInt())
         viewModelScope.launch {
             _uiStateWatchList.value = watchListRepository.getWatchItem(id.toInt()) != null
             mapFranchises(
@@ -45,6 +52,12 @@ class ReleaseScreenViewModel @Inject constructor(
                 async { repository.getFranchises(id) }.await(),
                 async { favoriteRepository.getFavorite(id.toInt()) }.await()
             )
+        }
+    }
+
+    fun getHistory(id: Int){
+        viewModelScope.launch {
+            _uiStateHistory.value = watchHistoryRepository.getHistoryRelease(id)
         }
     }
 

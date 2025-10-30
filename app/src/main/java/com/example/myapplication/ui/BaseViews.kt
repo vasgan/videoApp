@@ -255,7 +255,6 @@ fun Activity.setFullscreen(enable: Boolean) {
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     } else {
-        Log.e("olololololololo", enable.toString())
         controller.show(WindowInsetsCompat.Type.systemBars())
     }
 }

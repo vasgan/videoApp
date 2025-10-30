@@ -6,4 +6,6 @@ interface HistoryRepository {
     suspend fun addToHistory(history: History)
 
     suspend fun getHistory(): List<History>?
+
+    suspend fun getHistoryRelease(releaseId: Int): History?
 }

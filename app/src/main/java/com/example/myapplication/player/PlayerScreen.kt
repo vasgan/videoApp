@@ -2,6 +2,7 @@ package com.example.myapplication.player
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
+import android.util.Log
 import android.util.Rational
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -47,6 +48,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerView
+import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
 import com.example.myapplication.ui.theme.PlayerColor
@@ -59,6 +61,7 @@ import kotlinx.coroutines.launch
 fun PlayerScreen(
     episodeCount: Int,
     viewModel: PLayerViewModel,
+    releaseBase: Release,
     mediaSession: MediaSession?,
     onBackClick: () -> Unit
 ) {
@@ -81,11 +84,10 @@ fun PlayerScreen(
     val playerState by viewModel.playerState.collectAsState()
     val dragging by viewModel.draggingState.collectAsState()
     val isFavorite by viewModel.favoriteUiState.collectAsState()
+    val uiStateHistory by viewModel.uiStateHistory.collectAsState()
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            release?.episodes[episodeCount]?.hls480?.let {
-                   setMediaItem(MediaItem.fromUri(it))
-            }
+            setMediaItem(MediaItem.fromUri(releaseBase.episodes[episodeCount].hls480))
             prepare()
             playWhenReady = true
         }
@@ -132,6 +134,7 @@ fun PlayerScreen(
             ) {
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                     wasSeek = true
+                    viewModel.updateHistory(exoPlayer.currentPosition)
                 }
             }
 
@@ -140,14 +143,25 @@ fun PlayerScreen(
                     wasSeek = false
                     viewModel.draggingEnd()
                 }
+                viewModel.updateHistory(exoPlayer.currentPosition)
             }
         })
         onDispose {
+            viewModel.updateHistory(exoPlayer.currentPosition)
             activity?.setFullscreen(true)
             mediaSession.release()
             exoPlayer.release()
         }
     }
+    LaunchedEffect(Unit) {
+        viewModel.initViewModel(episodeCount, releaseBase)
+    }
+    LaunchedEffect(uiStateHistory) {
+        uiStateHistory?.let {
+            exoPlayer.seekTo(it.timeEnd)
+        }
+    }
+
     LaunchedEffect(exoPlayer) {
         while (true) {
             viewModel.changePosition(exoPlayer.currentPosition)
@@ -249,31 +263,32 @@ fun PlayerScreen(
                 }
             )
             //Кнопки переключить серию, плей пауз
-            PlayerControls(playerState,
+            PlayerControls(
+                playerState,
                 seekBack = {
-                changeEpisode(episodeNumber - 1)
-            }, playerPause = {
-                viewModel.pauseClick()
-            }, playerPlay = {
-                viewModel.playClick()
-            }, seekForward = {
-                changeEpisode(episodeNumber + 1)
-            })
+                    changeEpisode(episodeNumber - 1)
+                }, playerPause = {
+                    viewModel.pauseClick()
+                }, playerPlay = {
+                    viewModel.playClick()
+                }, seekForward = {
+                    changeEpisode(episodeNumber + 1)
+                })
             //Верхний бар плеера
             TopBarPlayer(
-                    Modifier
-                        .padding(end = 16.dp, bottom = 16.dp)
-                        .align(Alignment.TopCenter),
-                    release,
+                Modifier
+                    .padding(end = 16.dp, bottom = 16.dp)
+                    .align(Alignment.TopCenter),
+                release,
                 episodeNumber,
-                    {
-                        activity?.setFullscreen(false)
-                        onBackClick()
-                    }, {
-                    }, {
-                        showSeriesList = true
-                    }
-                )
+                {
+                    activity?.setFullscreen(false)
+                    onBackClick()
+                }, {
+                }, {
+                    showSeriesList = true
+                }
+            )
             //скролл плейра
             PlayerSlider(
                 modifier = Modifier
@@ -345,7 +360,7 @@ fun PlayerScreen(
         OpenSettings(
             availableVideoHeights(exoPlayer),
             {
-              showChangeQuality = false
+                showChangeQuality = false
             },
             {
                 selectVideoHeight(exoPlayer, it)
