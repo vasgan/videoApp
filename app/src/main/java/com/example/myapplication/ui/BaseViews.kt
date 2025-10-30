@@ -3,6 +3,7 @@ package com.example.myapplication.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -248,14 +249,13 @@ fun Context.findActivity(): Activity? = when (this) {
 }
 
 fun Activity.setFullscreen(enable: Boolean) {
-    WindowCompat.setDecorFitsSystemWindows(window, !enable)
-
     val controller = WindowInsetsControllerCompat(window, window.decorView)
     if (enable) {
         controller.hide(WindowInsetsCompat.Type.systemBars())
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     } else {
+        Log.e("olololololololo", enable.toString())
         controller.show(WindowInsetsCompat.Type.systemBars())
     }
 }

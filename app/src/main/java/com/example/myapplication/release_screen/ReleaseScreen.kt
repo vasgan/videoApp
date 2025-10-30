@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +50,8 @@ import com.example.myapplication.data.ui_data.Episode
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.AnnotatedClickableText
 import com.example.myapplication.ui.ShimmerImage
+import com.example.myapplication.ui.findActivity
+import com.example.myapplication.ui.setFullscreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +68,11 @@ fun ReleaseScreen(
     val model by viewModel.uiState.collectAsStateWithLifecycle()
     val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
     val watchList by viewModel.watchListUIState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    LaunchedEffect(Unit) {
+        activity?.setFullscreen(false)
+    }
     LazyColumn(
         modifier = Modifier
             .padding(innerPadding)

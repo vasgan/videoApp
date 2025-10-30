@@ -84,7 +84,6 @@ fun PlayerScreen(
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             release?.episodes[episodeCount]?.hls480?.let {
-              //  setMediaItem(MediaItem.fromUri("https://play.dreamerscast.com/hls/5735a073-c4c5-4b08-81db-bdbc83a5acab/aff880e1-c97b-4532-9f04-7e9e444d1829_,1080,720,low,aac,.mp4.urlset/master.m3u8"))
                    setMediaItem(MediaItem.fromUri(it))
             }
             prepare()
