@@ -1,25 +1,33 @@
 package com.example.myapplication.player
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.PictureInPictureParams
 import android.util.Rational
+import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import com.example.myapplication.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -50,6 +58,7 @@ import androidx.media3.ui.PlayerView
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
+import com.example.myapplication.ui.theme.Pink40
 import com.example.myapplication.ui.theme.PlayerColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -146,6 +155,11 @@ fun PlayerScreen(
                 viewModel.updateHistory(exoPlayer.currentPosition, doubers)
             }
         })
+        val window = (context as Activity).window
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
         onDispose {
             viewModel.updateHistory(exoPlayer.currentPosition, doubers)
             activity?.setFullscreen(true)
@@ -248,7 +262,6 @@ fun PlayerScreen(
             //Нижние кнопки
             BottomButtons(
                 Modifier
-                    .padding(end = 16.dp, bottom = 16.dp)
                     .align(Alignment.BottomEnd), isFavorite, {
                     viewModel.onFavoriteClick()
                 }, {
@@ -370,6 +383,23 @@ fun PlayerScreen(
 }
 
 @Composable
+private fun skipButton() {
+    Row(
+        Modifier.padding(16.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        FilledTonalButton(onClick = { /* действие */ }) {
+            Text(LocalContext.current.getString(R.string.skeep_opening))
+        }
+        OutlinedButton(modifier = Modifier.padding(start = 16.dp),
+            onClick = { /* действие */ }
+        ) {
+            Text(LocalContext.current.getString(R.string.cancel))
+        }
+    }
+}
+
+@Composable
 private fun BottomButtons(
     modifier: Modifier,
     favorite: Boolean,
@@ -377,56 +407,59 @@ private fun BottomButtons(
     onPictureInPicture: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
-    Row(
-        modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-    ) {
-        IconButton(
-            onClick = {
-                onFavoriteClick()
-            }) {
-            Icon(
-                painter = painterResource(
-                    if (!favorite) R.drawable.baseline_star_outline_24 else
-                        R.drawable.baseline_star_24
-                ),
-                contentDescription = "",
-                tint = PlayerColor,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-        IconButton(
-            onClick = {
-                //todo поделиться???
-            }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_share_24),
-                contentDescription = "",
-                tint = PlayerColor,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-        IconButton(
-            onClick = {
-                onPictureInPicture()
-            }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_picture_in_picture_24),
-                contentDescription = "",
-                tint = PlayerColor,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-        IconButton(
-            onClick = {
-                onSettingsClick()
-            }) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_settings_24),
-                contentDescription = "",
-                tint = PlayerColor,
-                modifier = Modifier.size(32.dp)
-            )
+    Column(modifier) {
+        skipButton()
+        Row(
+            Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            IconButton(
+                onClick = {
+                    onFavoriteClick()
+                }) {
+                Icon(
+                    painter = painterResource(
+                        if (!favorite) R.drawable.baseline_star_outline_24 else
+                            R.drawable.baseline_star_24
+                    ),
+                    contentDescription = "",
+                    tint = PlayerColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    //todo поделиться???
+                }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_share_24),
+                    contentDescription = "",
+                    tint = PlayerColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    onPictureInPicture()
+                }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_picture_in_picture_24),
+                    contentDescription = "",
+                    tint = PlayerColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    onSettingsClick()
+                }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_settings_24),
+                    contentDescription = "",
+                    tint = PlayerColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
     }
 }
