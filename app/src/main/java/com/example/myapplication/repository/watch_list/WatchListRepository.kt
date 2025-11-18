@@ -1,6 +1,5 @@
 package com.example.myapplication.repository.watch_list
 
-import com.example.myapplication.data.db.favorite.Favorite
 import com.example.myapplication.data.db.watch_list.WatchListItem
 
 interface WatchListRepository {

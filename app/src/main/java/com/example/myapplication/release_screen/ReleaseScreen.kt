@@ -204,7 +204,7 @@ fun ShowRelease(
                         },
                     painter = if (watchList) painterResource(id = R.drawable.add_to_queue_24dp_select)
                     else painterResource(id = R.drawable.add_to_queue_24dp),
-                    contentDescription = "",
+                    contentDescription = null,
                     contentScale = ContentScale.Crop
                 )
                 Image(
@@ -216,7 +216,7 @@ fun ShowRelease(
                         },
                     painter = if (favorite) painterResource(id = R.drawable.baseline_star_24)
                     else painterResource(id = R.drawable.baseline_star_outline_24),
-                    contentDescription = "",
+                    contentDescription = null,
                     contentScale = ContentScale.Crop
                 )
             }

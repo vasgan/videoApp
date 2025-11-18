@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 
-
 @Composable
 fun ProfileScreen(
     innerPadding: PaddingValues,

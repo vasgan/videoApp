@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -17,14 +16,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.session.MediaSession
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.myapplication.AnimeDestinations.MAIN_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
@@ -38,17 +37,13 @@ import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
 import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.data.parse.dreamcast.mapToRelease
-import com.example.myapplication.data.ui_data.Episode
-import com.example.myapplication.data.ui_data.Franchise
-import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
-import com.example.myapplication.data.ui_data.SkipTime
 import com.example.myapplication.favorite_screen.FavoriteScreen
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.history_screen.HistoryScreen
 import com.example.myapplication.history_screen.HistoryViewModel
-import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.main_screen.ListScreen
+import com.example.myapplication.main_screen.MainViewModel
 import com.example.myapplication.player.PLayerViewModel
 import com.example.myapplication.player.PlayerScreen
 import com.example.myapplication.profile_screen.ProfileScreen
@@ -63,7 +58,6 @@ import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreen
 import com.example.myapplication.watch.WatchScreenViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlin.String
 
 sealed class Root(val route: String, val label: String, val icon: Int) {
     data object Home : Root(MAIN_SCREEN_ROUTE, "Home", R.drawable.baseline_home_24)
@@ -151,7 +145,7 @@ fun AnimeAppNavGraph(
                         0.dp,
                         innerPadding.calculateBottomPadding()
                     ),
-                    viewModel,
+                    viewModel,//todo разобраться с пуустым жанром или перенести в константы
                     navController, genre ?: "", onItemClick = {
                         navActions.navigateToRelease(it)
                     }
@@ -162,14 +156,15 @@ fun AnimeAppNavGraph(
                 val release = navController.previousBackStackEntry?.savedStateHandle?.get<Release>(
                     RELEASE_EPISODE
                 )
-                val doubers = navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS)
+                val doubers =
+                    navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS)
                 val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
                 val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
                     doubers?.let { doubers ->
                         PlayerScreen(
                             episodeCount = episodeId ?: 0,
-                            viewModel =viewModel,
+                            viewModel = viewModel,
                             releaseBase = release,
                             onBackClick = {
                                 navController.popBackStack()
@@ -229,8 +224,12 @@ fun AnimeAppNavGraph(
                         viewModel,
                         release,
                         {}, { episodeNum, dreamCastRelease, dreamCastSeries ->
-                            navActions.navigateToPlayerScreen(episodeNum, mapToRelease(dreamCastSeries,
-                                dreamCastRelease), DREAM_CAST)
+                            navActions.navigateToPlayerScreen(
+                                episodeNum, mapToRelease(
+                                    dreamCastSeries,
+                                    dreamCastRelease
+                                ), DREAM_CAST
+                            )
                         }, {
                             navController.popBackStack()
                         })

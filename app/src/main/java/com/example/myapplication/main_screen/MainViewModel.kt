@@ -1,6 +1,5 @@
 package com.example.myapplication.main_screen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.network.Error
@@ -86,7 +85,7 @@ class MainViewModel @Inject constructor(
 
     private fun loadOnDreamCast() {
         loadDreamCast = dreamCastRepository
-            .searchOnDreamCast("", pageDC)
+            .searchOnDreamCast( pageNumber = pageDC)
             .onEach {
                 _uiStateDreamCast.value = when (it) {
                     is Error -> {

@@ -1,7 +1,6 @@
 package com.example.myapplication.data.db.history
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
 
 @Entity(

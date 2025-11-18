@@ -2,12 +2,10 @@ package com.example.myapplication.data.parse.dreamcast
 
 import android.os.Parcelable
 import com.example.myapplication.data.ui_data.Episode
-import com.example.myapplication.data.ui_data.Franchise
 import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.data.ui_data.SkipTime
 import kotlinx.parcelize.Parcelize
-import kotlin.collections.get
 
 @Parcelize
 data class DreamCastReleaseElement(

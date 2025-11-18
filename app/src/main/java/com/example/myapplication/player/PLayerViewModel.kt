@@ -1,6 +1,5 @@
 package com.example.myapplication.player
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -68,7 +67,7 @@ class PLayerViewModel @Inject constructor(
     fun initViewModel(episode: Int, release: Release) {
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
-        viewModelScope.launch {
+        viewModelScope.launch {//todo переписать на флоу
             if (favoriteRepository.getFavorite(release.id.toInt()) != null)
                 _uiStateFavorite.value = true
         }

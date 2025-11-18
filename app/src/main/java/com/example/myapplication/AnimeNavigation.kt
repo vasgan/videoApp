@@ -63,10 +63,10 @@ object AnimeDestinations {
 }
 
 class AnimeNavigation(private val navController: NavController) {
-    fun navigateToRelease(releaseId: String = "") {
+    fun navigateToRelease(releaseId: String) {
         navController.navigate(
             DETAIL_RELEASE_SCREEN.let {
-                if (releaseId != "") "$it?$RELEASE_ID_ARG=$releaseId" else it
+                "$it?$RELEASE_ID_ARG=$releaseId"
             }
         ) {
             popUpTo(navController.graph.findStartDestination().id)
@@ -93,18 +93,18 @@ class AnimeNavigation(private val navController: NavController) {
         )
     }
 
-    fun navigateFromReleaseToRelease(releaseId: String = "") {
+    fun navigateFromReleaseToRelease(releaseId: String) {
         navController.navigate(
             DETAIL_RELEASE_SCREEN.let {
-                if (releaseId != "") "$it?$RELEASE_ID_ARG=$releaseId" else it
+                "$it?$RELEASE_ID_ARG=$releaseId"
             }
         )
     }
 
-    fun navigateFromReleaseToGenreSearch(genres: String = "") {
+    fun navigateFromReleaseToGenreSearch(genres: String) {
         navController.navigate(
             SEARCH_SCREEN.let {
-                if (genres != "") "$it?$GENRE_ID_ARG=$genres" else it
+                "$it?$GENRE_ID_ARG=$genres"
             }
         )
     }
@@ -125,10 +125,10 @@ class AnimeNavigation(private val navController: NavController) {
         navController.navigate(SETTINGS_SCREEN_ROUTE)
     }
 
-    fun navigateFromFavoriteToReleaseScreen(releaseId: String = "") {
+    fun navigateFromFavoriteToReleaseScreen(releaseId: String) {
         navController.navigate(
             DETAIL_RELEASE_SCREEN.let {
-                if (releaseId != "") "$it?$RELEASE_ID_ARG=$releaseId" else it
+                "$it?$RELEASE_ID_ARG=$releaseId"
             }
         )
     }

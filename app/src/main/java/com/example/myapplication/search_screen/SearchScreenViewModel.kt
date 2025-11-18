@@ -2,7 +2,6 @@ package com.example.myapplication.search_screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
 import com.example.myapplication.repository.video.ReleaseRepository

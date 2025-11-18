@@ -3,11 +3,9 @@ package com.example.myapplication.data.network
 import androidx.annotation.Keep
 import com.example.myapplication.data.network.request.SearchRequest
 import com.example.myapplication.data.network.responses.BaseFranchiseResponse
-import com.example.myapplication.data.network.responses.FranchiseResponse
 import com.example.myapplication.data.network.responses.FullReleaseResponse
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.network.responses.base.BaseResponseWrapper
-import kotlinx.coroutines.flow.Flow
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
