@@ -57,6 +57,12 @@ class PLayerViewModel @Inject constructor(
     private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
     val uiStateHistory: StateFlow<History?> =_uiStateHistory.asStateFlow()
 
+    private val _uiStateShowOpening: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val uiStateShowOpening: StateFlow<Boolean> =_uiStateShowOpening.asStateFlow()
+
+    private val _uiStateShowEnding: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val uiStateShowEnding: StateFlow<Boolean> =_uiStateShowEnding.asStateFlow()
+
     private var hideViewsJob: Job? = null
 
     fun initViewModel(episode: Int, release: Release) {
@@ -162,6 +168,18 @@ class PLayerViewModel @Inject constructor(
 
     fun changePosition(position: Long) {
         _uiStatePosition.value = position
+        if (uiStateRelease.value?.episodes[uiStateEpisode.value]?.opening?.stop?.let { position/1000 > it } == true &&
+            uiStateRelease.value?.episodes[uiStateEpisode.value]?.opening?.end?.let { position/1000 < it } == true
+        ) _uiStateShowOpening.value = true else {
+            if (_uiStateShowOpening.value) _uiStateShowOpening.value = false
+        }
+
+        _uiStatePosition.value = position
+        if (uiStateRelease.value?.episodes[uiStateEpisode.value]?.ending?.stop?.let { position/1000 > it } == true &&
+            uiStateRelease.value?.episodes[uiStateEpisode.value]?.ending?.end?.let { position/1000 < it } == true
+        ) _uiStateShowEnding.value = true else {
+            if (_uiStateShowEnding.value) _uiStateShowEnding.value = false
+        }
     }
 
     fun seekEnd() {

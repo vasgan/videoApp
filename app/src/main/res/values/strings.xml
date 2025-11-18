@@ -16,7 +16,7 @@
     <string name="episode_count">Эпизоды:</string>
     <string name="start_watching">Начать просмотр</string>
     <string name="contine_watching">Продолжить просмотр с %1$s серии</string>
-    <string name="skeep_opening">Пропустить опенинг</string>
     <string name="cancel">Отмена</string>
-    <string name="skeep_ending">Пропустить эндинг</string>
+    <string name="skep_ending">Пропустить эндинг</string>
+    <string name="not_available_in_this_region">Не доступно на територии России</string>
 </resources>

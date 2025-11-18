@@ -27,7 +27,7 @@ fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> U
             .clickable { onItemClick(item.id) }) {
         val (image, title, description) = createRefs()
         ShimmerImage(
-            "https://aniliberty.top/" + item.poster.preview,
+            "https://anilibria.top/" + item.poster.preview,
             Modifier.constrainAs(image) {
                 width = Dimension.value(120.dp)
                 top.linkTo(parent.top)

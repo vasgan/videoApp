@@ -1,42 +1,64 @@
 package com.example.myapplication.repository.dreamcast
 
-import android.text.Html
 import android.util.Base64
+import android.util.Log
+import com.example.myapplication.data.network.Error
+import com.example.myapplication.data.network.Loading
+import com.example.myapplication.data.network.NetworkResponseWrapper
+import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.parse.dreamcast.BaseDreamCastSearch
 import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
-class DreamCastRepositoryImpl: DreamCastRepository {
-    override suspend fun searchOnDreamCast(search: String): List<DreamCastReleaseElement> {
-        return fetchReleasesBySearch(search)
+class DreamCastRepositoryImpl : DreamCastRepository {
+    override fun searchOnDreamCast(search: String, pageNumber: Int): Flow<NetworkResponseWrapper<List<DreamCastReleaseElement>>> {
+        return flow {
+            emit(Loading())
+            val result = fetchReleasesBySearch(search, pageNumber)
+            emit(Success(result))
+        }.catch {
+            if (it is SocketTimeoutException) {
+
+            }
+            if (it is UnknownHostException) {
+
+            }
+            emit(Error(it.message.toString()))
+        }.flowOn(Dispatchers.IO)
     }
+
 
     override suspend fun getVideoUrls(urlRelease: String): DreamCastDescriptionAndSeries {
         return getHtml(urlRelease)
     }
 
-    override suspend fun getReleases(): List<DreamCastReleaseElement> {
-        return fetchReleasesBySearch("")
+    override fun getReleases(pageNumber: Int): Flow<List<DreamCastReleaseElement>> {
+        return flow { fetchReleasesBySearch("", pageNumber) }
     }
 
-
-    private suspend fun fetchReleasesBySearch(searchString: String): List<DreamCastReleaseElement> =
+    private suspend fun fetchReleasesBySearch(searchString: String, pageNumber: Int): List<DreamCastReleaseElement> =
         withContext(Dispatchers.IO) {
-            val url = "https://dreamerscast.com/?search=$searchString&pageSize=20&pageNumber=1"
+            val url = "https://dreamerscast.com/?search=$searchString&pageNumber=$pageNumber"
             val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 setRequestProperty("User-Agent", "Mozilla/5.0 (Kotlin client)")
                 setRequestProperty("Accept-Language", "ru")
-                connectTimeout = 10_000
-                readTimeout = 10_000
+                connectTimeout = 5_000
+                readTimeout = 5_000
             }
             val html = conn.inputStream.bufferedReader().use { it.readText() }
             Gson().fromJson(html, BaseDreamCastSearch::class.java).releases
@@ -64,7 +86,8 @@ class DreamCastRepositoryImpl: DreamCastRepository {
 
             val firstDes = html.indexOf("description\" content=\"")
             val secondDes = html.indexOf("\">", firstDes)
-            descriptionText = html.substring(firstDes + "description\" content=\"".length, secondDes)
+            descriptionText =
+                html.substring(firstDes + "description\" content=\"".length, secondDes)
             val first = html.indexOf("atob(\"", secondDes)
             val second = html.indexOf("\").split('||||')", first)
             if (first < second) {

@@ -88,7 +88,7 @@ fun ReleaseScreen(
     ) {
         item {
             ShimmerImage(
-                url = "https://aniliberty.top/" + model?.poster,
+                url = "https://anilibria.top/" + model?.poster,
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),

@@ -5,9 +5,7 @@ import retrofit2.Response
 
 typealias BaseResponseWrapper<T> = Response<BaseResponse<T>>
 
-/**
- * Модель стандартного ответа сервера.
- */
+
 @Keep
 data class BaseResponse<T>(
     val data: T,

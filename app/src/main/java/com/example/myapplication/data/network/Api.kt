@@ -7,6 +7,7 @@ import com.example.myapplication.data.network.responses.FranchiseResponse
 import com.example.myapplication.data.network.responses.FullReleaseResponse
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.network.responses.base.BaseResponseWrapper
+import kotlinx.coroutines.flow.Flow
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -16,7 +17,7 @@ import retrofit2.http.Query
 @Keep
 interface Api {
     @GET("anime/catalog/releases")
-    suspend fun getReleases(): BaseResponseWrapper<List<ReleasesElementResponse>>
+    suspend fun getReleases(@Query("page") page: Int): BaseResponseWrapper<List<ReleasesElementResponse>>
 
     @GET("anime/releases/{id}")
     suspend fun getRelease(@Path("id") id: String): FullReleaseResponse

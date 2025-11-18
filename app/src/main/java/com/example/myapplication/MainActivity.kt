@@ -43,23 +43,6 @@ class MainActivity : ComponentActivity() {
                 .setSeamlessResizeEnabled(true)      // плавное изменение размера (13+)
             setPictureInPictureParams(pipBuilder.build())
         }
-
-        scope.launch {
-            repeat(5){
-                repeat(5) {
-                    delay(1000) // suspension point, проверяет отмену
-                    Log.e("ololololol","tick delay")
-                }
-            }
-        }
-        scope.launch {
-            repeat(5) {
-                Thread.sleep(1000) // блокирует поток, не проверяет отмену
-                Log.e("ololololol","tick thread")
-            }
-        }
-        Thread.sleep(2000)
-        scope.cancel()
     }
 
     override fun onPictureInPictureModeChanged(

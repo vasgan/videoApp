@@ -10,7 +10,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import com.example.myapplication.R
@@ -22,8 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,7 +55,6 @@ import androidx.media3.ui.PlayerView
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
-import com.example.myapplication.ui.theme.Pink40
 import com.example.myapplication.ui.theme.PlayerColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -94,6 +90,8 @@ fun PlayerScreen(
     val dragging by viewModel.draggingState.collectAsState()
     val isFavorite by viewModel.favoriteUiState.collectAsState()
     val uiStateHistory by viewModel.uiStateHistory.collectAsState()
+    val uiStateShowOpening by viewModel.uiStateShowOpening.collectAsState()
+    val uiStateShowEnding by viewModel.uiStateShowEnding.collectAsState()
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(releaseBase.episodes[episodeCount].hls480))
@@ -262,7 +260,10 @@ fun PlayerScreen(
             //Нижние кнопки
             BottomButtons(
                 Modifier
-                    .align(Alignment.BottomEnd), isFavorite, {
+                    .align(Alignment.BottomEnd),
+                isFavorite,
+                uiStateShowOpening,
+                uiStateShowEnding, {
                     viewModel.onFavoriteClick()
                 }, {
                     viewModel.urgentlyHideViews()
@@ -273,6 +274,13 @@ fun PlayerScreen(
                     activity?.enterPictureInPictureMode(params)
                 }, {
                     showChangeQuality = true
+                }, {
+                    release?.episodes[episodeCount]?.ending?.end?.toLong()
+                        ?.let { exoPlayer.seekTo(it * 1000) }
+                }, {
+
+                    release?.episodes[episodeCount]?.opening?.end?.toLong()
+                        ?.let { exoPlayer.seekTo(it * 1000) }
                 }
             )
             //Кнопки переключить серию, плей пауз
@@ -383,15 +391,30 @@ fun PlayerScreen(
 }
 
 @Composable
-private fun skipButton() {
+private fun SkipButton(
+    isEnding: Boolean,
+    onSkipEnding: () -> Unit,
+    onSkipStart: () -> Unit
+) {
     Row(
-        Modifier.padding(16.dp).fillMaxWidth(),
+        Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
     ) {
-        FilledTonalButton(onClick = { /* действие */ }) {
-            Text(LocalContext.current.getString(R.string.skeep_opening))
+        FilledTonalButton(onClick = {
+            if (isEnding)
+                onSkipEnding()
+            else
+                onSkipStart()
+        }) {
+            if (isEnding)
+                Text(LocalContext.current.getString(R.string.skep_ending))
+            else
+                Text(LocalContext.current.getString(R.string.skep_ending))
         }
-        OutlinedButton(modifier = Modifier.padding(start = 16.dp),
+        OutlinedButton(
+            modifier = Modifier.padding(start = 16.dp),
             onClick = { /* действие */ }
         ) {
             Text(LocalContext.current.getString(R.string.cancel))
@@ -403,14 +426,23 @@ private fun skipButton() {
 private fun BottomButtons(
     modifier: Modifier,
     favorite: Boolean,
+    showSkipOpeningButton: Boolean,
+    showSkipEndingButton: Boolean,
     onFavoriteClick: () -> Unit,
     onPictureInPicture: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onSkipEnding: () -> Unit,
+    onSkipStart: () -> Unit
 ) {
     Column(modifier) {
-        skipButton()
+        if (showSkipOpeningButton)
+            SkipButton(false, onSkipEnding, onSkipStart)
+        if (showSkipEndingButton)
+            SkipButton(true, onSkipEnding, onSkipStart)
         Row(
-            Modifier.padding(16.dp).fillMaxWidth(),
+            Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
             IconButton(

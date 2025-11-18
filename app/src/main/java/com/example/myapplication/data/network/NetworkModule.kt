@@ -33,7 +33,7 @@ class NetworkModule {
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://aniliberty.top/api/v1/")
+            .baseUrl("https://www.anilibria.top/api/v1/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
