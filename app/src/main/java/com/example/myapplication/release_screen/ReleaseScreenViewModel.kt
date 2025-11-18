@@ -1,9 +1,13 @@
 package com.example.myapplication.release_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.favorite.Favorite
 import com.example.myapplication.data.db.history.History
+import com.example.myapplication.data.network.Error
+import com.example.myapplication.data.network.Loading
+import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.network.responses.BaseFranchiseResponse
 import com.example.myapplication.data.network.responses.EpisodeResponse
 import com.example.myapplication.data.network.responses.FranchiseResponse
@@ -22,21 +26,34 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Suppress("UNCHECKED_CAST")
 class ReleaseScreenViewModel @Inject constructor(
     private val repository: ReleaseRepository,
     private val favoriteRepository: FavoriteRepository,
     private val watchListRepository: WatchListRepository,
     private val watchHistoryRepository: HistoryRepository
 ) : ViewModel() {
-    private val _uiState: MutableStateFlow<Release?> = MutableStateFlow(null)
-    val uiState: StateFlow<Release?> = _uiState.asStateFlow()
 
+    //Парсинг релиза
+    private val _uiStateRelease: MutableStateFlow<UiReleaseAniliberty?> = MutableStateFlow(null)
+    val uiStateRelease: StateFlow<UiReleaseAniliberty?> = _uiStateRelease.asStateFlow()
+
+    //Парсинг франчайза
+    private val _uiStateFranchise: MutableStateFlow<UiFranchiseAniliberty?> = MutableStateFlow(null)
+    val uiStateFranchise: StateFlow<UiFranchiseAniliberty?> = _uiStateFranchise.asStateFlow()
+
+    // Список на просмотр
     private val _uiStateWatchList: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val watchListUIState: StateFlow<Boolean> = _uiStateWatchList.asStateFlow()
 
+    //Избранное
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
 
@@ -45,48 +62,73 @@ class ReleaseScreenViewModel @Inject constructor(
 
     fun getCurrentRelease(id: String) {
         getHistory(id.toInt())
-        viewModelScope.launch {
-            _uiStateWatchList.value = watchListRepository.getWatchItem(id.toInt()) != null
-            mapFranchises(
-                async { repository.getRelease(id) }.await(),
-                async { repository.getFranchises(id) }.await(),
-                async { favoriteRepository.getFavorite(id.toInt()) }.await()
-            )
-        }
+        repository.getRelease(id).onEach {
+            when (it) {
+                is Error<*> -> {
+                    _uiStateRelease.value = UiReleaseAniliberty.ErrorUiReleaseAniliberty()
+                }
+
+                is Loading<*> -> {
+                    _uiStateRelease.value = UiReleaseAniliberty.LoadingUiReleaseAniliberty()
+                }
+
+                is Success<*> -> {
+                    _uiStateRelease.value =
+                        UiReleaseAniliberty.CompleteUiReleaseAniliberty(mapRelease(it.data as FullReleaseResponse))
+                }
+            }
+        }.launchIn(viewModelScope)
+
+        repository.getFranchises(id).onEach {
+            when (it) {
+                is Error<*> -> {
+                    _uiStateFranchise.value = UiFranchiseAniliberty.ErrorUiFranchiseAniliberty()
+                }
+
+                is Loading<*> -> {
+                    _uiStateFranchise.value = UiFranchiseAniliberty.LoadingUiFranchiseAniliberty()
+                }
+
+                is Success<*> -> {
+                    if (it.data is ArrayList<*>) {
+                        if (it.data.isNotEmpty()) {
+                            _uiStateFranchise.value =
+                                UiFranchiseAniliberty.CompleteUiFranchiseAniliberty(
+                                    mapFranchise(it.data[0] as BaseFranchiseResponse)
+                                )
+                        } else
+                            _uiStateFranchise.value =
+                                UiFranchiseAniliberty.CompleteUiFranchiseAniliberty(emptyList())
+                    } else
+                        _uiStateFranchise.value =
+                            UiFranchiseAniliberty.CompleteUiFranchiseAniliberty(emptyList())
+                }
+            }
+        }.launchIn(viewModelScope)
+
+        favoriteRepository.getFavorite(id.toInt()).onEach {
+            _uiStateFavorite.value = (it.id > 0)
+        }.launchIn(viewModelScope)
     }
 
-    fun getHistory(id: Int){
+    private fun getHistory(id: Int) {
         viewModelScope.launch {
             _uiStateHistory.value = watchHistoryRepository.getHistoryRelease(id)
         }
     }
 
-    private fun mapFranchises(
-        release: FullReleaseResponse?,
-        franchiseResponse: List<BaseFranchiseResponse>?,
-        favorite: Favorite?
-    ) {
-        _uiStateFavorite.value = favorite != null
-        if (release == null) return
-        val franchises =
-            if (franchiseResponse == null || franchiseResponse.isEmpty()) mutableListOf()
-            else franchiseResponse[0].franchiseReleases
-        val value = Release(
-            release.id,
-            release.name.main,
-            release.poster.preview,
-            release.description,
-            release.year + " " + release.season.description,
-            mapGenres(release.genres),
-            release.ageRating.value,
-            release.type.description + " (" + release.episodes.size + ")," + release.averageDurationOfEpisode + "мин",
-            (release.averageDurationOfEpisode).toString(),
-            mapFranchise(franchises),
-            mapEpisodes(release.episodes),
-            favorite = favorite != null
-        )
-        _uiState.value = value
-    }
+    private fun mapRelease(release: FullReleaseResponse) = Release(
+        release.id,
+        release.name.main,
+        release.poster.preview,
+        release.description,
+        release.year + " " + release.season.description,
+        mapGenres(release.genres),
+        release.ageRating.value,
+        release.type.description + " (" + release.episodes.size + ")," + release.averageDurationOfEpisode + "мин",
+        (release.averageDurationOfEpisode).toString(),
+        mapEpisodes(release.episodes),
+    )
 
     private fun mapGenres(list: List<GenresResponse>): List<Genres> {
         val genres = mutableListOf<Genres>()
@@ -101,9 +143,9 @@ class ReleaseScreenViewModel @Inject constructor(
         return genres
     }
 
-    private fun mapFranchise(franchise: List<FranchiseResponse>?): List<Franchise> {
+    private fun mapFranchise(franchise: BaseFranchiseResponse?): List<Franchise> {
         val value = mutableListOf<Franchise>()
-        franchise?.forEach {
+        franchise?.franchiseReleases?.forEach {
             value.add(
                 Franchise(
                     it.id ?: "",
@@ -122,7 +164,7 @@ class ReleaseScreenViewModel @Inject constructor(
         episodes.forEach {
             value.add(
                 Episode(
-                    it?.name ?: "",
+                    it.name ?: "",
                     it.id,
                     it.ordinal,
                     it.hls480 ?: "",
@@ -142,25 +184,27 @@ class ReleaseScreenViewModel @Inject constructor(
 
     fun changeFavorite() {
         viewModelScope.launch {
-            val id = _uiState.value?.id?.toInt()
-            val name = _uiState.value?.name
-            val poster = _uiState.value?.poster
-            if (id != null && name != null && poster != null)
-                if (!_uiStateFavorite.value) {
-                    favoriteRepository.addFavorite(id, name, poster)
-                    _uiStateFavorite.value = true
-                } else {
-                    favoriteRepository.removeFavorite(id)
-                    _uiStateFavorite.value = false
-                }
+            if (_uiStateRelease.value is UiReleaseAniliberty.CompleteUiReleaseAniliberty) {
+                val id = _uiStateRelease.value?.release?.id?.toInt()
+                val name = _uiStateRelease.value?.release?.name
+                val poster = _uiStateRelease.value?.release?.poster
+                if (id != null && name != null && poster != null)
+                    if (!_uiStateFavorite.value) {
+                        favoriteRepository.addFavorite(id, name, poster)
+                        _uiStateFavorite.value = true
+                    } else {
+                        favoriteRepository.removeFavorite(id)
+                        _uiStateFavorite.value = false
+                    }
+            } else return@launch
         }
     }
 
     fun changeWatchList() {
         viewModelScope.launch {
-            val id = _uiState.value?.id?.toInt()
-            val name = _uiState.value?.name
-            val poster = _uiState.value?.poster
+            val id = _uiStateRelease.value?.release?.id?.toInt()
+            val name = _uiStateRelease.value?.release?.name
+            val poster = _uiStateRelease.value?.release?.poster
             if (id != null && name != null && poster != null)
                 if (!_uiStateWatchList.value) {
                     watchListRepository.addToWatchList(id, name, poster)
@@ -171,4 +215,16 @@ class ReleaseScreenViewModel @Inject constructor(
                 }
         }
     }
+}
+
+sealed class UiReleaseAniliberty(val release: Release?) {
+    class LoadingUiReleaseAniliberty(releases: Release? = null) : UiReleaseAniliberty(releases)
+    class CompleteUiReleaseAniliberty(releases: Release?) : UiReleaseAniliberty(releases)
+    class ErrorUiReleaseAniliberty(releases: Release? = null) : UiReleaseAniliberty(releases)
+}
+
+sealed class UiFranchiseAniliberty(val franchise: List<Franchise>?) {
+    class LoadingUiFranchiseAniliberty(franchise: List<Franchise>? = null) : UiFranchiseAniliberty(franchise)
+    class CompleteUiFranchiseAniliberty(franchise: List<Franchise>?) : UiFranchiseAniliberty(franchise)
+    class ErrorUiFranchiseAniliberty(franchise: List<Franchise>? = null) : UiFranchiseAniliberty(franchise)
 }

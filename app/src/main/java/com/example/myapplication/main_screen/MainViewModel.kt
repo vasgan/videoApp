@@ -11,7 +11,6 @@ import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,36 +36,55 @@ class MainViewModel @Inject constructor(
         getAnilibertyLastReleases()
         getDreamCastReleases()
     }
-    /*  fun getDreamCastUrls(url: String) {
-            viewModelScope.launch {
-                dreamCastRepository.getVideoUrls(url)
-            }
-        }*/
 
     fun getDreamCastReleases() {
         if (loadDreamCast != null) return
         pageDC = 1
-        loadDreamCast = dreamCastRepository
-            .searchOnDreamCast("", pageDC)
-            .onEach {
-                _uiStateDreamCast.value = when (it) {
-                    is Error -> {
-                        loadDreamCast = null
-                        ErrorDC()
-                    }
-                    is Loading -> LoadingFirstDC()
-                    is Success -> {
-                        loadDreamCast = null
-                        CompleteLoadDreamCast(it.data)
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
+        loadOnDreamCast()
     }
 
     fun scrollEndDC() {
         if (loadDreamCast != null) return
         pageDC++
+        loadOnDreamCast()
+    }
+
+    fun getAnilibertyLastReleases() {
+        if (loadAnilibria != null) return
+        pageAl = 1
+        loadOnAnilibria()
+    }
+
+    fun scrollEndAnilibria() {
+        if (loadAnilibria != null) return
+        pageAl++
+        loadOnAnilibria()
+    }
+
+    private fun loadOnAnilibria() {
+        loadAnilibria = repository.getReleases(pageAl).onEach {
+            _uiState.value = when(it) {
+                is Error -> {
+                    loadAnilibria = null
+                    if (pageAl > 1)
+                        ErrorAl(_uiState.value?.releases)
+                    else ErrorAl()
+                }
+                is Loading ->
+                    if (pageAl > 1)
+                        LoadingNextAl(_uiState.value?.releases)
+                    else LoadingFirstAl()
+                is Success -> {
+                    loadAnilibria = null
+                    if (pageAl > 1)
+                    CompleteLoadAniliberty(_uiState.value?.releases?.plus(it.data))
+                    else CompleteLoadAniliberty(it.data)
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun loadOnDreamCast() {
         loadDreamCast = dreamCastRepository
             .searchOnDreamCast("", pageDC)
             .onEach {
@@ -76,54 +94,22 @@ class MainViewModel @Inject constructor(
                         ErrorDC()
                     }
 
-                    is Loading -> LoadingNextDC(_uiStateDreamCast.value?.releases)
+                    is Loading -> {
+                        if (pageDC > 1)
+                            LoadingNextDC(_uiStateDreamCast.value?.releases)
+                        else
+                            LoadingFirstDC()
+                    }
                     is Success -> {
                         loadDreamCast = null
+                        if (pageDC > 1)
                         _uiStateDreamCast.value?.releases?.plus( it.data)?.let { releases -> CompleteLoadDreamCast(releases) }
+                        else
+                            CompleteLoadDreamCast(it.data)
                     }
                 }
             }
             .launchIn(viewModelScope)
-    }
-
-    fun getAnilibertyLastReleases() {
-        if (loadAnilibria != null) return
-        pageAl = 1
-        _uiState.value?.releases?.let {
-            if (it.isNotEmpty())
-                _uiState.value = CompleteLoadAniliberty(it)
-        }
-        loadAnilibria = repository.getReleases(pageAl).onEach {
-            _uiState.value = when(it) {
-                is Error -> {
-                    loadAnilibria = null
-                    ErrorAl()
-                }
-                is Loading -> LoadingFirstAl()
-                is Success -> {
-                    loadAnilibria = null
-                    CompleteLoadAniliberty(it.data)
-                }
-            }
-        }.launchIn(viewModelScope)
-    }
-
-    fun scrollEndAnilibria() {
-        if (loadAnilibria != null) return
-        pageAl++
-        loadAnilibria = repository.getReleases(pageAl).onEach {
-            _uiState.value = when(it) {
-                is Error -> {
-                    loadAnilibria = null
-                    ErrorAl(_uiState.value?.releases)
-                }
-                is Loading -> LoadingNextAl(_uiState.value?.releases)
-                is Success -> {
-                    loadAnilibria = null
-                    CompleteLoadAniliberty(_uiState.value?.releases?.plus(it.data))
-                }
-            }
-        }.launchIn(viewModelScope)
     }
 }
 

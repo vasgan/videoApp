@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -157,26 +158,26 @@ fun AnimeAppNavGraph(
                 )
             }
 
-
-
             composable(PLAYER_SCREEN_ROUTE) { entry ->
                 val release = navController.previousBackStackEntry?.savedStateHandle?.get<Release>(
                     RELEASE_EPISODE
                 )
-                val doubers = navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS) + ""
+                val doubers = navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS)
                 val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
                 val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
-                    PlayerScreen(
-                        episodeCount = episodeId ?: 0,
-                        viewModel =viewModel,
-                        releaseBase = release,
-                        onBackClick = {
-                            navController.popBackStack()
-                        },
-                        mediaSession = mediaSession,
-                        doubers = doubers
-                    )
+                    doubers?.let { doubers ->
+                        PlayerScreen(
+                            episodeCount = episodeId ?: 0,
+                            viewModel =viewModel,
+                            releaseBase = release,
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            mediaSession = mediaSession,
+                            doubers = doubers
+                        )
+                    }
                 }
             }
 

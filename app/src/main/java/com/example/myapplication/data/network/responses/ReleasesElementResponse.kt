@@ -6,7 +6,7 @@ data class ReleasesElementResponse(
     val poster: ImageResponse,
     val isOngoing: Boolean,
     val name: NameResponse,
-    val description: String,
+    val description: String?,
     val episodesTotal: String,
     val genres: List<GenresResponse>
 )

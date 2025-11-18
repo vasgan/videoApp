@@ -1,6 +1,7 @@
 package com.example.myapplication.release_screen
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,18 +19,15 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -52,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.ui_data.Episode
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.AnnotatedClickableText
@@ -71,16 +70,80 @@ fun ReleaseScreen(
     onEpisodeClick: (Int, Release) -> Unit,
     onBackClick: () -> Unit
 ) {
-    val model by viewModel.uiState.collectAsStateWithLifecycle()
-    val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
+    val model by viewModel.uiStateRelease.collectAsStateWithLifecycle()
+    val franchise by viewModel.uiStateFranchise.collectAsStateWithLifecycle()
     val watchList by viewModel.watchListUIState.collectAsStateWithLifecycle()
     val history by viewModel.uiStateHistory.collectAsStateWithLifecycle()
+    val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = context.findActivity()
-    viewModel.getCurrentRelease(id)
     LaunchedEffect(Unit) {
         activity?.setFullscreen(false)
+        viewModel.getCurrentRelease(id)
     }
+    when (model) {
+        is UiReleaseAniliberty.CompleteUiReleaseAniliberty ->
+            model!!.release?.let { release ->
+                franchise?.let { franchiseState ->
+                    ShowRelease(
+                        context, innerPadding, history, watchList, viewModel, release,
+                        franchiseState, favorite, onReleaseClick, onGenreClick, onEpisodeClick
+                    )
+                }
+            }
+
+        is UiReleaseAniliberty.ErrorUiReleaseAniliberty -> {
+        }
+
+        is UiReleaseAniliberty.LoadingUiReleaseAniliberty -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(40.dp),
+                    strokeWidth = 4.dp
+                )
+            }
+        }
+
+        null -> {
+        }
+    }
+    //todo перерисовать на иконку с фоном каким-нить и нажатием
+    TopAppBar(
+        title = { Text("") },
+        navigationIcon = {
+            IconButton(onClick = {
+                onBackClick()
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Назад"
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent, // фон прозрачный
+            scrolledContainerColor = Color.Transparent
+        )
+    )
+}
+
+@Composable
+fun ShowRelease(
+    context: Context,
+    innerPadding: PaddingValues,
+    history: History?,
+    watchList: Boolean,
+    viewModel: ReleaseScreenViewModel,
+    model: Release,
+    franchiseState: UiFranchiseAniliberty,
+    favorite: Boolean,
+    onReleaseClick: (String) -> Unit,
+    onGenreClick: (String) -> Unit,
+    onEpisodeClick: (Int, Release) -> Unit
+) {
     LazyColumn(
         modifier = Modifier
             .padding(innerPadding)
@@ -88,7 +151,7 @@ fun ReleaseScreen(
     ) {
         item {
             ShimmerImage(
-                url = "https://anilibria.top/" + model?.poster,
+                url = "https://anilibria.top/" + model.poster,
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
@@ -103,23 +166,27 @@ fun ReleaseScreen(
                         bottom = 0.dp
                     )
                     .fillMaxWidth(), onClick = {
-                    model?.let {
-                        if (history == null)
-                            onEpisodeClick(0, it)
-                        else
-                            onEpisodeClick(history!!.episodeNumber, it)
-                    }
+                    if (history == null)
+                        onEpisodeClick(0, model)
+                    else
+                        onEpisodeClick(history.episodeNumber, model)
+
                 }) {
                 if (history == null)
                     Text(context.getString(R.string.start_watching))
-                else Text(context.getString(R.string.contine_watching, (history!!.episodeNumber + 1).toString()))
+                else Text(
+                    context.getString(
+                        R.string.contine_watching,
+                        (history.episodeNumber + 1).toString()
+                    )
+                )
             }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val name = model?.name + "(" + model?.episodes?.size + ")"
+                val name = model.name + "(" + model.episodes.size + ")"
                 Text(
                     text = name,
                     modifier = Modifier
@@ -159,7 +226,7 @@ fun ReleaseScreen(
                 withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                     append(localContext.getString(R.string.genres) + " ")
                 }
-                model?.genres?.forEachIndexed { index, response ->
+                model.genres.forEachIndexed { index, response ->
                     pushStringAnnotation(response.name, response.id)
                     withStyle(
                         SpanStyle(
@@ -170,7 +237,7 @@ fun ReleaseScreen(
                         append(response.name)
                     }
                     pop()
-                    if (index != model!!.genres.lastIndex) append(", ")
+                    if (index != model.genres.lastIndex) append(", ")
                 }
             }
 
@@ -189,7 +256,7 @@ fun ReleaseScreen(
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                         append(localContext.getString(R.string.season) + " ")
                     }
-                    append(model?.year)
+                    append(model.year)
                 }, modifier = Modifier
                     .padding(PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)),
                 style = MaterialTheme.typography.bodyLarge
@@ -201,7 +268,7 @@ fun ReleaseScreen(
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                         append(localContext.getString(R.string.type_release) + " ")
                     }
-                    append(model?.type)
+                    append(model.type)
                 }, modifier = Modifier
                     .padding(PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)),
                 style = MaterialTheme.typography.bodyLarge
@@ -215,96 +282,102 @@ fun ReleaseScreen(
                 color = Color.LightGray
             )
             //Описание
-            Text(
-                text = model?.description + " ",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    lineHeight = 16.sp
-                ),
-                modifier = Modifier //todo выпилить нормально чекать на нулл
-                    .padding(PaddingValues(16.dp, 16.dp, 16.dp, 16.dp)),
-            )
-
-            model?.franchise?.size?.let {
-                if (it > 0)
-                //Разделитель франшизы
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(12.dp),
-                        thickness = 12.dp,
-                        color = Color.LightGray
-                    )
-            }
-        }
-        model?.franchise?.size?.let {
-            items(model?.franchise!!.size) { i ->
+            if (!model.description.isNullOrEmpty()) {
                 Text(
-                    text = model!!.franchise[i].releaseName,
-                    modifier = Modifier
-                        .clickable {
-                            onReleaseClick(model!!.franchise[i].releaseId)
-                        }
-                        .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+                    text = model.description,
                     style = TextStyle(
                         fontSize = 16.sp,
                         lineHeight = 16.sp
                     ),
-                )
-            }
-        }
-        item {
-            model?.franchise?.size?.let {
-                //Разделитель франшизы
-                HorizontalDivider(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp),
-                    thickness = 12.dp,
-                    color = Color.LightGray
+                        .padding(PaddingValues(16.dp, 16.dp, 16.dp, 16.dp)),
                 )
             }
+            if (franchiseState is UiFranchiseAniliberty.CompleteUiFranchiseAniliberty) {
+                franchiseState.franchise?.size.let {
+                    it?.let { it1 ->
+                        if (it1 > 0)
+                        //Разделитель франшизы
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                                    .height(12.dp),
+                                thickness = 12.dp,
+                                color = Color.LightGray
+                            )
+                    }
+                }
+            }
         }
-        model?.episodes?.size?.let { it1 ->
-            items(it1) { i ->
-                EpisodeItem(model!!.episodes[i]) {
-                    onEpisodeClick(i, model!!)
+        when (franchiseState) {
+            is UiFranchiseAniliberty.CompleteUiFranchiseAniliberty -> {
+                franchiseState.franchise?.size?.let {
+                    items(it) { i ->
+                        Text(
+                            text = franchiseState.franchise[i].releaseName,
+                            modifier = Modifier
+                                .clickable {
+                                    onReleaseClick(franchiseState.franchise[i].releaseId)
+                                }
+                                .padding(PaddingValues(16.dp, 8.dp, 16.dp, 8.dp)),
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp
+                            ),
+                        )
+                    }
+                }
+                item {
+                    franchiseState.franchise?.size.let {
+                        //Разделитель франшизы
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
+                                .height(12.dp),
+                            thickness = 12.dp,
+                            color = Color.LightGray
+                        )
+                    }
                 }
             }
 
+            is UiFranchiseAniliberty.ErrorUiFranchiseAniliberty -> {
+            }
+
+            is UiFranchiseAniliberty.LoadingUiFranchiseAniliberty -> {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            strokeWidth = 4.dp
+                        )
+                    }
+                }
+            }
+        }
+
+
+        items(model.episodes.size) { i ->
+            EpisodeItem(model.episodes[i]) {
+                onEpisodeClick(i, model)
+            }
         }
         item {
-            model?.franchise?.size?.let {
-                //Разделитель франшизы
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp),
-                    thickness = 12.dp,
-                    color = Color.LightGray
-                )
-            }
+            //Разделитель Эпизодов
+            HorizontalDivider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(12.dp),
+                thickness = 12.dp,
+                color = Color.LightGray
+            )
         }
     }
-
-    //todo перерисовать на иконку с фоном каким-нить и нажатием
-    TopAppBar(
-        title = { Text("") },
-        navigationIcon = {
-            IconButton(onClick = {
-                onBackClick()
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Назад"
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent, // фон прозрачный
-            scrolledContainerColor = Color.Transparent
-        )
-    )
 }
 
 @Composable

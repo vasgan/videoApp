@@ -156,7 +156,7 @@ fun ListScreen(
                                 }
                             }
 
-                            is ErrorDC -> TODO()
+                            is ErrorDC -> {}//TODO(сделать обработку ошибок)
                             is LoadingFirstDC -> {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(40.dp),

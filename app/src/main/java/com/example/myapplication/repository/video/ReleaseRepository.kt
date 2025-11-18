@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 interface ReleaseRepository {
     fun getReleases(page: Int): Flow<NetworkResponseWrapper<List<ReleasesElementResponse>>>
 
-    suspend fun getRelease(id: String): FullReleaseResponse?
+    fun getRelease(id: String): Flow<NetworkResponseWrapper<FullReleaseResponse>>
 
     suspend fun getSearchWithTextFilter(id: List<Int>, text: String): List<ReleasesElementResponse>
 
-    suspend fun getFranchises(id: String): List<BaseFranchiseResponse>?
+    fun getFranchises(id: String): Flow<NetworkResponseWrapper<List<BaseFranchiseResponse>>>
 
 }

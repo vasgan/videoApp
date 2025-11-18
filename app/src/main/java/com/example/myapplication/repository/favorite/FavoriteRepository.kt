@@ -1,6 +1,7 @@
 package com.example.myapplication.repository.favorite
 
 import com.example.myapplication.data.db.favorite.Favorite
+import kotlinx.coroutines.flow.Flow
 
 interface FavoriteRepository {
 
@@ -10,5 +11,5 @@ interface FavoriteRepository {
 
     suspend fun getFavorites(): List<Favorite>?
 
-    suspend fun getFavorite(id: Int): Favorite?
+    fun getFavorite(id: Int): Flow<Favorite>
 }

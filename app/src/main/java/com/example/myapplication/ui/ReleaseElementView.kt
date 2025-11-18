@@ -47,18 +47,20 @@ fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> U
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.bodyLarge
         )
-        Text(
-            text = item.description + " ",//todo выпилить нормально чекать на нулл
-            modifier = Modifier
-                .constrainAs(description) {
-                    top.linkTo(title.bottom)
-                    start.linkTo(image.end)
-                    end.linkTo(parent.end)
-                    width = Dimension.fillToConstraints
-                }
-                .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
-            maxLines = 4
-        )
+        if (item.description != null && item.description != "null") {
+            Text(
+                text = item.description,
+                modifier = Modifier
+                    .constrainAs(description) {
+                        top.linkTo(title.bottom)
+                        start.linkTo(image.end)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                    }
+                    .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+                maxLines = 4
+            )
+        }
     }
 }
 

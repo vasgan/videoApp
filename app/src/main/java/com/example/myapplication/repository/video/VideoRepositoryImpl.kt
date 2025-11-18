@@ -11,13 +11,11 @@ import com.example.myapplication.data.network.request.SearchRequest
 import com.example.myapplication.data.network.responses.BaseFranchiseResponse
 import com.example.myapplication.data.network.responses.FullReleaseResponse
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.Int
@@ -46,9 +44,14 @@ class VideoRepositoryImpl  @Inject constructor(
             .flowOn(Dispatchers.IO)
     }
 
-    override suspend fun getRelease(id: String): FullReleaseResponse? {
-        val result = api.getRelease(id)
-        return result
+    override fun getRelease(id: String): Flow<NetworkResponseWrapper<FullReleaseResponse>> {
+        return flow{
+            emit(Loading())
+            emit(Success(api.getRelease(id)))
+        }.catch { e ->
+            emit(Error(e.message ?: "Unexpected error"))
+        }
+            .flowOn(Dispatchers.IO)
     }
 
     override suspend fun getSearchWithTextFilter(id: List<Int>, text: String): List<ReleasesElementResponse> {
@@ -68,8 +71,13 @@ class VideoRepositoryImpl  @Inject constructor(
         return mutableListOf()
     }
 
-    override suspend fun getFranchises(id: String): List<BaseFranchiseResponse>{
-        val result = api.getFranchises(id)
-        return result
+    override fun getFranchises(id: String): Flow<NetworkResponseWrapper<List<BaseFranchiseResponse>>> {
+        return flow{
+            emit(Loading())
+            emit(Success(api.getFranchises(id)))
+        }.catch { e ->
+            emit(Error(e.message ?: "Unexpected error"))
+        }
+            .flowOn(Dispatchers.IO)
     }
 }

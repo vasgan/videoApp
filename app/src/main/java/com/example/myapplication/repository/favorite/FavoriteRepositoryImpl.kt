@@ -2,6 +2,8 @@ package com.example.myapplication.repository.favorite
 
 import com.example.myapplication.data.db.favorite.Favorite
 import com.example.myapplication.data.db.favorite.FavoriteDao
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class FavoriteRepositoryImpl(val favoriteDB: FavoriteDao) : FavoriteRepository {
 
@@ -17,7 +19,13 @@ class FavoriteRepositoryImpl(val favoriteDB: FavoriteDao) : FavoriteRepository {
         return favoriteDB.getFavorites()
     }
 
-    override suspend fun getFavorite(id: Int): Favorite? {
-        return favoriteDB.getFavorite(id)
+    override fun getFavorite(id: Int): Flow<Favorite> {
+        return flow {
+            val favorite = favoriteDB.getFavorite(id)
+            if (favorite != null)
+                emit(favorite)
+            else
+                emit(Favorite(-1, "", ""))
+        }
     }
 }
