@@ -11,7 +11,7 @@ interface ReleaseRepository {
 
     fun getRelease(id: String): Flow<NetworkResponseWrapper<FullReleaseResponse>>
 
-    suspend fun getSearchWithTextFilter(id: List<Int>, text: String): List<ReleasesElementResponse>
+    fun getSearchWithTextFilter(id: List<Int>, text: String): Flow<NetworkResponseWrapper<List<ReleasesElementResponse>?>>
 
     fun getFranchises(id: String): Flow<NetworkResponseWrapper<List<BaseFranchiseResponse>>>
 

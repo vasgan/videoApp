@@ -125,7 +125,7 @@ fun AnimeAppNavGraph(
                 ListScreen(
                     PaddingValues(
                         16.dp,
-                        24.dp,
+                        innerPadding.calculateTopPadding(),
                         16.dp,
                         innerPadding.calculateBottomPadding()
                     ), viewModel, {
@@ -140,9 +140,9 @@ fun AnimeAppNavGraph(
                 val genre = entry.arguments?.getString(GENRE_ID_ARG)
                 SearchScreen(
                     PaddingValues(
-                        0.dp,
+                        16.dp,
                         innerPadding.calculateTopPadding(),
-                        0.dp,
+                        16.dp,
                         innerPadding.calculateBottomPadding()
                     ),
                     viewModel,//todo разобраться с пуустым жанром или перенести в константы

@@ -23,12 +23,12 @@ import kotlin.String
 import kotlin.collections.List
 
 @Singleton
-class VideoRepositoryImpl  @Inject constructor(
+class VideoRepositoryImpl @Inject constructor(
     private val localDataSource: VideoDao,
     private val api: Api
 ) : ReleaseRepository {
     override fun getReleases(page: Int): Flow<NetworkResponseWrapper<List<ReleasesElementResponse>>> {
-        return flow{
+        return flow {
             emit(Loading())
             val result = api.getReleases(page)
             if (result.isSuccessful) {
@@ -39,13 +39,13 @@ class VideoRepositoryImpl  @Inject constructor(
                 emit(Error(result.message() ?: "Unknown error"))
             }
         }.catch { e ->
-                emit(Error(e.message ?: "Unexpected error"))
-            }
+            emit(Error(e.message ?: "Unexpected error"))
+        }
             .flowOn(Dispatchers.IO)
     }
 
     override fun getRelease(id: String): Flow<NetworkResponseWrapper<FullReleaseResponse>> {
-        return flow{
+        return flow {
             emit(Loading())
             emit(Success(api.getRelease(id)))
         }.catch { e ->
@@ -54,25 +54,35 @@ class VideoRepositoryImpl  @Inject constructor(
             .flowOn(Dispatchers.IO)
     }
 
-    override suspend fun getSearchWithTextFilter(id: List<Int>, text: String): List<ReleasesElementResponse> {
-        val searchRequest = SearchRequest(1, 20, RequestFilter(   id,
-            mutableListOf(),
-            mutableListOf(),
-            null,
-        text,
-        "",
-                mutableListOf(),
-            mutableListOf(),
-        mutableListOf()))
-        val result = api.getSearchWithFilter(searchRequest).body()?.data
-        result?.let {
-            return result
+    override fun getSearchWithTextFilter(
+        id: List<Int>,
+        text: String
+    ): Flow<NetworkResponseWrapper<List<ReleasesElementResponse>?>> {
+        return flow {
+            emit(Loading())
+            val searchRequest = SearchRequest(
+                1, 20, RequestFilter(
+                    id,
+                    mutableListOf(),
+                    mutableListOf(),
+                    null,
+                    text,
+                    "",
+                    mutableListOf(),
+                    mutableListOf(),
+                    mutableListOf()
+                )
+            )
+            val result = api.getSearchWithFilter(searchRequest).body()?.data
+            emit(Success(result))
+        }.catch { e ->
+            emit(Error(e.message ?: "Unexpected error"))
         }
-        return mutableListOf()
+            .flowOn(Dispatchers.IO)
     }
 
     override fun getFranchises(id: String): Flow<NetworkResponseWrapper<List<BaseFranchiseResponse>>> {
-        return flow{
+        return flow {
             emit(Loading())
             emit(Success(api.getFranchises(id)))
         }.catch { e ->
