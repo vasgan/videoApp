@@ -54,20 +54,40 @@ fun SearchScreen(
                 },
                 placeholder = { Text(stringResource(R.string.enter_name)) },
                 singleLine = true,
-                modifier = Modifier.padding(top = 16.dp, bottom = 16.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(top = 16.dp, bottom = 16.dp)
+                    .fillMaxWidth()
             )
         }
-        when(items) {
+        when (items) {
             is UISearchAl.CompleteUISearchAl -> {
                 items!!.releases?.let { releses ->
-                    items(releses.size) { item ->
-                        ReleaseElementView(releses[item], onItemClick)
-                    }
+                    if (releses.size == 0) {
+                        item {
+                            Text(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                text = stringResource(R.string.nothing_found)
+                            )
+                        }
+                    } else
+                        items(releses.size) { item ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 8.dp, bottom = 8.dp)
+                            ) {
+                                ReleaseElementView(releses[item], onItemClick)
+                            }
+                        }
                 }
             }
+
             is UISearchAl.ErrorUISearchAl -> {
 
             }
+
             is UISearchAl.LoadingUISearchAl -> {
                 item {
                     Box(
@@ -81,6 +101,7 @@ fun SearchScreen(
                     }
                 }
             }
+
             null -> {
 
             }

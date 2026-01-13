@@ -8,4 +8,8 @@ interface HistoryRepository {
     suspend fun getHistory(): List<History>?
 
     suspend fun getHistoryRelease(releaseId: Int): History?
+
+    suspend fun getLastALRelease(): History?
+
+    suspend fun getLastDCRelease(): History?
 }

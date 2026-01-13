@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -28,9 +29,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.example.myapplication.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.ui.ReleaseElementView
 import com.example.myapplication.ui.ReleaseElementViewDreamCast
@@ -54,6 +57,8 @@ fun ListScreen(
     ) {
         LazyListState()
     }
+
+    val historyAL by viewModel.uiStateHistory.collectAsState()
     val itemsAniliberty by viewModel.uiState.collectAsState()
     val itemsDreamCast by viewModel.uiDreamCastState.collectAsState()
     val tabs = listOf(
@@ -106,6 +111,13 @@ fun ListScreen(
                                     contentPadding = innerPadding,
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
+                                    historyAL?.let {
+                                        item {
+                                            ShowHistory(it, {
+
+                                            })
+                                        }
+                                    }
                                     itemsAniliberty?.releases?.let { elements ->
                                         items(elements.size) { item ->
                                             if (item > elements.lastIndex - 3)
@@ -145,7 +157,7 @@ fun ListScreen(
                                             if (item > list.lastIndex - 3)
                                                 viewModel.scrollEndDC()
                                             ReleaseElementViewDreamCast(list[item]) {
-                                                    onDreamCastItemClick(list[item])
+                                                onDreamCastItemClick(list[item])
                                             }
                                         }
                                         if (itemsDreamCast is LoadingNextDC)
@@ -174,6 +186,27 @@ fun ListScreen(
     }
 }
 
+@SuppressLint("StringFormatInvalid")
+@Composable
+fun ShowHistory(history: History, onContinueWatchingClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 16.dp)
+            .fillMaxWidth()
+    ) {
+        Text(LocalContext.current.getString(R.string.your_stop, history.releaseName))
+        FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = {
+            onContinueWatchingClick()
+        }) {
+            Text(LocalContext.current.getString(R.string.continue_watching))
+
+        }
+    }
+}
+
 @Composable
 fun LoadingSpinner() {
     Box(
@@ -188,3 +221,31 @@ fun LoadingSpinner() {
         )
     }
 }
+
+/*class WBWallet(initialBalance: Int, val owner: String) {
+    var balance: Int = initialBalance
+    val history: MutableList<Transaction> = mutableListOf()
+
+    fun deposit(amount: Int) {
+        balance += amount
+        history.add(Transaction("+$amount"))
+    }
+
+    fun withdraw(amount: Int) {
+        balance -= amount
+        history.add(Transaction("-$amount"))
+    }
+
+    fun transferTo(otherWallet: WBWallet, amount: Int) {
+        synchronized(this) {
+                balance -= amount
+                history.add(Transaction("-$amount"))
+                }
+
+                synchronized(otherWallet) {
+                otherWallet.balance += amount
+                otherWallet.history.add(Trnsaction("+$amount"))
+            }
+
+    }
+}*/

@@ -1,13 +1,17 @@
 package com.example.myapplication.main_screen
 
+import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
 import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
+import com.example.myapplication.repository.history.HistoryRepository
 import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,16 +19,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
     private val repository: ReleaseRepository,
-    private val dreamCastRepository: DreamCastRepository
+    private val dreamCastRepository: DreamCastRepository,
+    private val historyRepository: HistoryRepository
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<UiAnilibertyState?> = MutableStateFlow(null)
     val uiState: StateFlow<UiAnilibertyState?> = _uiState.asStateFlow()
     private val _uiStateDreamCast: MutableStateFlow<UiDreamCastState?> = MutableStateFlow(null)
     val uiDreamCastState: StateFlow<UiDreamCastState?> = _uiStateDreamCast.asStateFlow()
+
+    private val _uiStateLoadHistory: MutableStateFlow<History?> = MutableStateFlow(null)
+    val uiStateHistory: StateFlow<History?> = _uiStateLoadHistory.asStateFlow()
 
     private var loadAnilibria: Job? = null
     private var loadDreamCast: Job? = null
@@ -34,6 +43,13 @@ class MainViewModel @Inject constructor(
     init {
         getAnilibertyLastReleases()
         getDreamCastReleases()
+        loadHistory()
+    }
+
+    fun loadHistory() {
+        viewModelScope.launch {
+            _uiStateLoadHistory.value = historyRepository.getLastALRelease()
+        }
     }
 
     fun getDreamCastReleases() {

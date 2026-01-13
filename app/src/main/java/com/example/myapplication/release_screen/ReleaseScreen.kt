@@ -176,7 +176,7 @@ fun ShowRelease(
                     Text(context.getString(R.string.start_watching))
                 else Text(
                     context.getString(
-                        R.string.contine_watching,
+                        R.string.continue_watching_from_series,
                         (history.episodeNumber + 1).toString()
                     )
                 )

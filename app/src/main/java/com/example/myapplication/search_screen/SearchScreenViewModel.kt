@@ -1,5 +1,6 @@
 package com.example.myapplication.search_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.network.Error
@@ -49,6 +50,7 @@ class SearchScreenViewModel @Inject constructor(
                             _uiState.value = UISearchAl.LoadingUISearchAl()
                         }
                         is Success<*> -> {
+                            Log.e("olololololo", (it.data as List<ReleasesElementResponse>?)?.size.toString())
                             _uiState.value = UISearchAl.CompleteUISearchAl(it.data as List<ReleasesElementResponse>?)
                         }
                     }

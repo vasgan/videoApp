@@ -9,15 +9,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaSession
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     @Inject
@@ -26,6 +29,9 @@ class MainActivity : ComponentActivity() {
     private var mediaSession: MediaSession? = null
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    suspend fun functionA(): Int {
+        return 10 //Random.nextInt(1, 10)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         this.getString(R.string.title_activity_main)
@@ -42,6 +48,14 @@ class MainActivity : ComponentActivity() {
                 .setAutoEnterEnabled(true)           // при свайпе вверх сам войдёт в PiP
                 .setSeamlessResizeEnabled(true)      // плавное изменение размера (13+)
             setPictureInPictureParams(pipBuilder.build())
+        }
+
+        lifecycleScope.launch {
+            val value1 = async {functionA()
+            }.await()
+            val value2 = async { functionA() }.await()
+            Log.e("olololololo", (value1 + value2).toString())
+
         }
     }
 
