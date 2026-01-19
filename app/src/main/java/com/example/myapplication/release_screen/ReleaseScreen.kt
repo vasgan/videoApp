@@ -2,6 +2,7 @@ package com.example.myapplication.release_screen
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -150,8 +151,9 @@ fun ShowRelease(
             .fillMaxSize()
     ) {
         item {
+            Log.e("olololololo", model.poster)
             ShimmerImage(
-                url = "https://anilibria.top/" + model.poster,
+                url = "https://aniliberty.top/" + model.poster,
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),

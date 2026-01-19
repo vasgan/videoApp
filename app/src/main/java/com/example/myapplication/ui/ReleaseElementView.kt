@@ -1,5 +1,8 @@
 package com.example.myapplication.ui
 
+import android.graphics.Color
+import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +20,7 @@ import androidx.constraintlayout.compose.Dimension
 import com.example.myapplication.R
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.ui.theme.PlayerColor
 
 
 @Composable
@@ -27,9 +31,9 @@ fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> U
             .clickable { onItemClick(item.id) }) {
         val (image, title, description) = createRefs()
         ShimmerImage(
-            "https://anilibria.top/" + item.poster.preview,
+            "https://aniliberty.top/" + item.poster.preview,
             Modifier.constrainAs(image) {
-                width = Dimension.value(120.dp)
+                width = Dimension.value(100.dp)
                 top.linkTo(parent.top)
                 start.linkTo(parent.start)
             }, ContentScale.FillWidth, 8
@@ -58,8 +62,9 @@ fun ReleaseElementView(item: ReleasesElementResponse, onItemClick: (String) -> U
                         width = Dimension.fillToConstraints
                     }
                     .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 4
-            )
+                )
         }
     }
 }

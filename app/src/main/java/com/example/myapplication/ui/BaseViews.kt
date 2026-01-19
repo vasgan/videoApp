@@ -14,12 +14,14 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.horizontalDrag
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,34 +59,49 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.example.myapplication.R
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 
 @Composable
-fun ShimmerImage(url: String, modifier: Modifier = Modifier,scale: ContentScale, rounded: Int) {
+fun ShimmerImage(url: String, modifier: Modifier = Modifier, scale: ContentScale, rounded: Int) {
     var isLoading by remember { mutableStateOf(true) }
 
-    AsyncImage(
+    SubcomposeAsyncImage(
         contentScale = scale,
         model = ImageRequest.Builder(LocalContext.current)
             .data(url)
             .crossfade(true)
             .listener(
-                onSuccess = { _, _ -> isLoading = false },
-                onError = { _, _ -> isLoading = false }
+                onSuccess = { _, _ ->
+                    isLoading = false
+                },
+                onError = { _, _ ->
+                    isLoading = false
+                }
             )
             .build(),
         contentDescription = null,
-        //todo выпилить либу и запилить кастомный шиммер
         modifier = modifier
             .clip(RoundedCornerShape(rounded.dp))
             .placeholder(
                 visible = isLoading,
                 highlight = PlaceholderHighlight.shimmer(),
                 color = Color.LightGray
-            )
+            ),
+        loading = {
+            Box(
+                Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(strokeWidth = 2.dp)
+            }
+        },
+        error = {
+            Text(LocalContext.current.getString(R.string.loading_error))
+        }
     )
 }
 

@@ -23,4 +23,5 @@
     <string name="nothing_found">Ничего не найдено</string>
     <string name="your_stop">Вы смотрели: %1$s</string>
     <string name="continue_watching">Продолжить просмотр</string>
+    <string name="loading_error">Ошибка загрузки</string>
 </resources>
