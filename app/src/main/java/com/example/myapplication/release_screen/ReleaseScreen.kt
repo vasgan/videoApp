@@ -151,7 +151,6 @@ fun ShowRelease(
             .fillMaxSize()
     ) {
         item {
-            Log.e("olololololo", model.poster)
             ShimmerImage(
                 url = "https://aniliberty.top/" + model.poster,
                 modifier = Modifier

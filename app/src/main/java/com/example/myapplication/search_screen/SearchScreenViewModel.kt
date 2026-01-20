@@ -50,7 +50,6 @@ class SearchScreenViewModel @Inject constructor(
                             _uiState.value = UISearchAl.LoadingUISearchAl()
                         }
                         is Success<*> -> {
-                            Log.e("olololololo", (it.data as List<ReleasesElementResponse>?)?.size.toString())
                             _uiState.value = UISearchAl.CompleteUISearchAl(it.data as List<ReleasesElementResponse>?)
                         }
                     }

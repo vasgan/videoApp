@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             val value1 = async {functionA()
             }.await()
             val value2 = async { functionA() }.await()
-            Log.e("olololololo", (value1 + value2).toString())
+//            Log.e("olololololo", (value1 + value2).toString())
 
         }
     }

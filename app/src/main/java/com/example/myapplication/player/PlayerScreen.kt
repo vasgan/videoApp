@@ -3,6 +3,7 @@ package com.example.myapplication.player
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.PictureInPictureParams
+import android.util.Log
 import android.util.Rational
 import android.view.WindowManager
 import androidx.annotation.OptIn
