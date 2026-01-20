@@ -1,11 +1,8 @@
 package com.example.myapplication.player
 
 import android.content.Context
-import android.util.Log
-import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.ui_data.Release
@@ -69,9 +66,11 @@ class PLayerViewModel @Inject constructor(
 
     private var hideViewsJob: Job? = null
 
-    private val manger = PlayerManager()
+    private val manager = PlayerManager()
+    val player: PlayerManager get() = manager
 
-    fun initViewModel(episode: Int, release: Release) {
+    fun initViewModel(context: Context, episode: Int, release: Release) {
+        manager.initPlayer(context,  release.episodes[episode].hls480)
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
         viewModelScope.launch {//todo переписать на флоу

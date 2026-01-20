@@ -3,9 +3,9 @@ package com.example.myapplication.player
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.myapplication.player.error.PlayerNotInitialization
 
-class PlayerManager() {
-
+class PlayerManager {
     private var _player: ExoPlayer? = null
     val player: ExoPlayer? get() = _player
 
@@ -13,13 +13,11 @@ class PlayerManager() {
     private var playWhenReady: Boolean = true
     private var lastMediaItem: MediaItem? = null
 
-
-    fun init(context: Context, mediaItem: MediaItem) {
+    fun initPlayer(context: Context, url: String) {
         if (_player == null) {
             _player = ExoPlayer.Builder(context.applicationContext).build()
         }
-
-        // если медиа поменялось — установи и восстанови
+        val mediaItem = MediaItem.fromUri(url)
         if (lastMediaItem != mediaItem) {
             lastMediaItem = mediaItem
             player?.setMediaItem(mediaItem)
@@ -29,15 +27,38 @@ class PlayerManager() {
         }
     }
 
-    fun saveState() {
-        _player?.let {
-            lastPositionMs = it.currentPosition
-            playWhenReady = it.playWhenReady
+    fun seekForward(position: Long) {
+        checkInit()
+        player?.seekTo(position)
+    }
+
+    fun play() {
+        checkInit()
+        player?.let {
+            if (it.isPlaying)
+                it.pause()
+            else
+                it.play()
         }
     }
 
-    fun onCleared() {
-        _player?.release()
-        _player = null
+    fun speedX() {
+        checkInit()
+    }
+
+    fun changeEpisode(url: String) {
+        checkInit()
+        val mediaItem = MediaItem.fromUri(url)
+        if (lastMediaItem != mediaItem) {
+            lastMediaItem = mediaItem
+            player?.setMediaItem(mediaItem)
+            player?.prepare()
+            player?.seekTo(lastPositionMs)
+            player?.playWhenReady = playWhenReady
+        }
+    }
+
+    private fun checkInit() {
+        if (player == null) throw PlayerNotInitialization()
     }
 }
