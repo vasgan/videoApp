@@ -92,47 +92,58 @@ fun PlayerScreen(
     val uiStateHistory by viewModel.uiStateHistory.collectAsState()
     val uiStateShowOpening by viewModel.uiStateShowOpening.collectAsState()
     val uiStateShowEnding by viewModel.uiStateShowEnding.collectAsState()
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(releaseBase.episodes[episodeCount].hls480))
-            prepare()
-            playWhenReady = true
-        }
-    }
 
-    val mediaSession = remember {
+/*    val mediaSession = remember {
         MediaSession.Builder(context, exoPlayer).build()
-    }
+    }*/
 
     fun changeEpisode(episodeNum: Int) {
         viewModel.onChangeEpisode(episodeNum)
-        exoPlayer.stop()
-        exoPlayer.clearMediaItems()
+        viewModel.player.player?.stop()
+        viewModel.player.player?.clearMediaItems()
         release?.episodes[episodeNum]?.hls480?.let {
-            exoPlayer.setMediaItem(
+            viewModel.player.player?.setMediaItem(
                 MediaItem.fromUri(it),
                 true
             )
         }
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = true
+        viewModel.player.player?.prepare()
+        viewModel.player.player?.playWhenReady = true
         showSeriesList = false
     }
+    viewModel.initPlayer(context, episodeCount, releaseBase)
+    LaunchedEffect(Unit) {
+        viewModel.initViewModel(episodeCount, releaseBase)
+    }
 
-    DisposableEffect(
-        AndroidView(
-            modifier = Modifier
-                .fillMaxSize(),
-            factory = {
-                PlayerView(context).apply {
-                    player = exoPlayer
-                    useController = false
-                    setBackgroundColor(context.getColor(R.color.black))
-                }
+    LaunchedEffect(viewModel.player.player) {
+        while (true) {
+            viewModel.player.player?.let { viewModel.changePosition(it.currentPosition) }
+            viewModel.player.player?.let { duration = it.duration }
+            delay(500)
+        }
+    }
+
+    AndroidView(
+        modifier = Modifier
+            .fillMaxSize(),
+        factory = {
+            PlayerView(it).apply {
+                player = viewModel.player.player
+                useController = false
+                setBackgroundColor(context.getColor(R.color.black))
             }
-        )
-    ) {
-        exoPlayer.addListener(object : Player.Listener {
+        },
+        update = { view ->
+            val p = viewModel.player.player
+            if (view.player !== p) {
+                view.player = p
+            }
+            view.useController = false
+        }
+    )
+    DisposableEffect(viewModel.player.player) {
+        viewModel.player.player?.addListener(object : Player.Listener {
             private var wasSeek = false
             override fun onPositionDiscontinuity(
                 oldPosition: Player.PositionInfo,
@@ -141,7 +152,7 @@ fun PlayerScreen(
             ) {
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                     wasSeek = true
-                    viewModel.updateHistory(exoPlayer.currentPosition, doubers)
+                    viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
                 }
             }
 
@@ -150,37 +161,19 @@ fun PlayerScreen(
                     wasSeek = false
                     viewModel.draggingEnd()
                 }
-                viewModel.updateHistory(exoPlayer.currentPosition, doubers)
+                viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
             }
         })
         val window = (context as Activity).window
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onDispose {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-        onDispose {
-            viewModel.updateHistory(exoPlayer.currentPosition, doubers)
+            viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
             activity?.setFullscreen(true)
-            mediaSession.release()
-            exoPlayer.release()
-        }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.initViewModel(context, episodeCount, releaseBase)
-    }
-    LaunchedEffect(uiStateHistory) {
-        uiStateHistory?.let {
-            exoPlayer.seekTo(it.timeEnd)
+            //mediaSession.release()
         }
     }
 
-    LaunchedEffect(exoPlayer) {
-        while (true) {
-            viewModel.changePosition(exoPlayer.currentPosition)
-            duration = exoPlayer.duration
-            delay(500)
-        }
-    }
     var jobMoving: Job? = null
     Box(
         Modifier
@@ -216,7 +209,7 @@ fun PlayerScreen(
                             delay(500) // 1 секунда удержания
                             weStart = true
                             viewModel.fastSpeed()
-                            exoPlayer.setPlaybackSpeed(2f)
+                            viewModel.player.player?.setPlaybackSpeed(2f)
 
                         }
                         val released = try {
@@ -229,7 +222,7 @@ fun PlayerScreen(
                             job.cancel() // Если отпустили раньше 1 сек — отменяем
                             if (weStart) {
                                 viewModel.endShowSupportView()
-                                exoPlayer.setPlaybackSpeed(1f)
+                                viewModel.player.player?.setPlaybackSpeed(1f)
                             }
                         }
                     }
@@ -271,16 +264,16 @@ fun PlayerScreen(
                     val params = PictureInPictureParams.Builder()
                         .setAspectRatio(aspect)
                         .build()
-                    activity?.enterPictureInPictureMode(params)
+    //                activity?.enterPictureInPictureMode(params)
                 }, {
                     showChangeQuality = true
                 }, {
                     release?.episodes[episodeCount]?.ending?.end?.toLong()
-                        ?.let { exoPlayer.seekTo(it * 1000) }
+                        ?.let { viewModel.player.player?.seekTo(it * 1000) }
                 }, {
 
                     release?.episodes[episodeCount]?.opening?.end?.toLong()
-                        ?.let { exoPlayer.seekTo(it * 1000) }
+                        ?.let { viewModel.player.player?.seekTo(it * 1000) }
                 }
             )
             //Кнопки переключить серию, плей пауз
@@ -311,20 +304,22 @@ fun PlayerScreen(
                 }
             )
             //скролл плейра
-            PlayerSlider(
-                modifier = Modifier
-                    .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
-                    .align(Alignment.BottomStart),
-                playerPositionMs = position,
-                playerDurationMs = duration,
-                bufferedFraction = exoPlayer.bufferedPercentage.toFloat() / 100,
-                onSeekMs = {
-                    exoPlayer.seekTo(it)
-                },
-                onChangePositionStart = { dragPosition ->
-                    draggingPosition = dragPosition
-                    viewModel.dragging()
-                })
+            viewModel.player.player?.bufferedPercentage?.toFloat()?.let {
+                PlayerSlider(
+                    modifier = Modifier
+                        .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
+                        .align(Alignment.BottomStart),
+                    playerPositionMs = position,
+                    playerDurationMs = duration,
+                    bufferedFraction = it / 100,
+                    onSeekMs = {
+                        viewModel.player.player?.seekTo(it)
+                    },
+                    onChangePositionStart = { dragPosition ->
+                        draggingPosition = dragPosition
+                        viewModel.dragging()
+                    })
+            }
             //Текст показываюший время текущего трека
             Text(
                 modifier = Modifier
@@ -346,13 +341,15 @@ fun PlayerScreen(
     }
     when (seekTo) {
         is SeekToState.OnNext -> {
-            exoPlayer.seekTo(exoPlayer.currentPosition + 1000 * secondsSeek)
+            viewModel.player.player?.currentPosition?.let { viewModel.player.player?.seekTo(it + 1000 * secondsSeek) }
             viewModel.seekEnd()
             secondsSeek = 0
         }
 
         is SeekToState.OnPrevious -> {
-            exoPlayer.seekTo(exoPlayer.currentPosition + 1000 * secondsSeek)
+            viewModel.player.player?.let {
+                it.seekTo(it.currentPosition + 1000 * secondsSeek)
+            }
             viewModel.seekEnd()
             secondsSeek = 0
         }
@@ -362,9 +359,11 @@ fun PlayerScreen(
         }
     }
 
-    when (playerState) {
-        is PlayerState.OnPlay -> if (!exoPlayer.isPlaying) exoPlayer.play()
-        is PlayerState.OnPause -> if (exoPlayer.isPlaying) exoPlayer.pause()
+    viewModel.player.player?.let { player ->
+        when (playerState) {
+            is PlayerState.OnPlay -> if (!player.isPlaying) player.play()
+            is PlayerState.OnPause -> if (player.isPlaying) player.pause()
+        }
     }
 
     if (showSeriesList) {
@@ -378,15 +377,17 @@ fun PlayerScreen(
     }
 
     if (showChangeQuality) {
-        OpenSettings(
-            availableVideoHeights(exoPlayer),
-            {
-                showChangeQuality = false
-            },
-            {
-                selectVideoHeight(exoPlayer, it)
-                showChangeQuality = false
-            })
+        viewModel.player.player?.let {player ->
+            OpenSettings(
+                availableVideoHeights(player),
+                {
+                    showChangeQuality = false
+                },
+                {
+                    selectVideoHeight(player, it)
+                    showChangeQuality = false
+                })
+        }
     }
 }
 

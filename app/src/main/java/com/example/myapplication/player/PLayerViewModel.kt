@@ -3,7 +3,6 @@ package com.example.myapplication.player
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.exoplayer.ExoPlayer
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.repository.favorite.FavoriteRepository
@@ -68,9 +67,10 @@ class PLayerViewModel @Inject constructor(
 
     private val manager = PlayerManager()
     val player: PlayerManager get() = manager
-
-    fun initViewModel(context: Context, episode: Int, release: Release) {
+    fun initPlayer(context: Context, episode: Int, release: Release) {
         manager.initPlayer(context,  release.episodes[episode].hls480)
+    }
+    fun initViewModel(episode: Int, release: Release) {
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
         viewModelScope.launch {//todo переписать на флоу
@@ -79,6 +79,7 @@ class PLayerViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _uiStateHistory.value = historyRepository.getHistoryRelease(release.id.toInt())
+            _uiStateHistory.value?.let { player.seekForward(it.timeEnd) }
         }
     }
 
@@ -205,6 +206,11 @@ class PLayerViewModel @Inject constructor(
                     _uiStateFavorite.value = false
                 }
         }
+    }
+
+    override fun onCleared() {
+        manager.endPlay()
+        super.onCleared()
     }
 }
 

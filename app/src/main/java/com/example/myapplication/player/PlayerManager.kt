@@ -61,4 +61,8 @@ class PlayerManager {
     private fun checkInit() {
         if (player == null) throw PlayerNotInitialization()
     }
+
+    fun endPlay() {
+        player?.release()
+    }
 }
