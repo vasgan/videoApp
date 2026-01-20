@@ -20,21 +20,21 @@ class PlayerManager {
         val mediaItem = MediaItem.fromUri(url)
         if (lastMediaItem != mediaItem) {
             lastMediaItem = mediaItem
-            player?.setMediaItem(mediaItem)
-            player?.prepare()
-            player?.seekTo(lastPositionMs)
-            player?.playWhenReady = playWhenReady
+            _player?.setMediaItem(mediaItem)
+            _player?.prepare()
+            _player?.seekTo(lastPositionMs)
+            _player?.playWhenReady = playWhenReady
         }
     }
 
     fun seekForward(position: Long) {
         checkInit()
-        player?.seekTo(position)
+        _player?.seekTo(position)
     }
 
     fun play() {
         checkInit()
-        player?.let {
+        _player?.let {
             if (it.isPlaying)
                 it.pause()
             else
@@ -51,18 +51,18 @@ class PlayerManager {
         val mediaItem = MediaItem.fromUri(url)
         if (lastMediaItem != mediaItem) {
             lastMediaItem = mediaItem
-            player?.setMediaItem(mediaItem)
-            player?.prepare()
-            player?.seekTo(lastPositionMs)
-            player?.playWhenReady = playWhenReady
+            _player?.setMediaItem(mediaItem)
+            _player?.prepare()
+            _player?.seekTo(lastPositionMs)
+            _player?.playWhenReady = playWhenReady
         }
     }
 
     private fun checkInit() {
-        if (player == null) throw PlayerNotInitialization()
+        if (_player == null) throw PlayerNotInitialization()
     }
 
     fun endPlay() {
-        player?.release()
+        _player?.release()
     }
 }

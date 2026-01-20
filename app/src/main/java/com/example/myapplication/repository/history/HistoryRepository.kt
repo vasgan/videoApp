@@ -7,7 +7,7 @@ interface HistoryRepository {
 
     suspend fun getHistory(): List<History>?
 
-    suspend fun getHistoryRelease(releaseId: Int): History?
+    suspend fun getHistoryRelease(releaseId: Int): List<History>?
 
     suspend fun getLastALRelease(): History?
 

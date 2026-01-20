@@ -31,7 +31,11 @@ class ReleaseDreamCastViewModel @Inject constructor(
 
     fun getHistory(id: Int){
         viewModelScope.launch {
-            _uiStateHistory.value = watchHistoryRepository.getHistoryRelease(id)
+            // todo test it
+            watchHistoryRepository.getHistoryRelease(id)?.let {
+                if (it.isNotEmpty())
+                    _uiStateHistory.value = it[0]
+            }
         }
     }
 }

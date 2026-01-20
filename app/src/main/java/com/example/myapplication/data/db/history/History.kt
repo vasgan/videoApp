@@ -5,7 +5,7 @@ import androidx.room.Entity
 
 @Entity(
     tableName = "history",
-    primaryKeys = ["releaseId", "doubers"]
+    primaryKeys = ["releaseId", "doubers", "episodeId"]
 )
 data class History(
     val releaseId: Int,

@@ -18,7 +18,7 @@ class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
         return historyDb.getHistories()
     }
 
-    override suspend fun getHistoryRelease(releaseId: Int): History? {
+    override suspend fun getHistoryRelease(releaseId: Int): List<History>? {
         return historyDb.getHistory(releaseId)
     }
 

@@ -13,6 +13,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,9 +56,6 @@ class PLayerViewModel @Inject constructor(
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
 
-    private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
-    val uiStateHistory: StateFlow<History?> = _uiStateHistory.asStateFlow()
-
     private val _uiStateShowOpening: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiStateShowOpening: StateFlow<Boolean> = _uiStateShowOpening.asStateFlow()
 
@@ -66,20 +65,26 @@ class PLayerViewModel @Inject constructor(
     private var hideViewsJob: Job? = null
 
     private val manager = PlayerManager()
+    private var historiesRelease: List<History>? = null
+
     val player: PlayerManager get() = manager
+
     fun initPlayer(context: Context, episode: Int, release: Release) {
         manager.initPlayer(context,  release.episodes[episode].hls480)
     }
     fun initViewModel(episode: Int, release: Release) {
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
-        viewModelScope.launch {//todo переписать на флоу
-            if (favoriteRepository.getFavorite(release.id.toInt()) != null)
+        favoriteRepository.getFavorite(release.id.toInt()).onEach {
+            if (it.id == release.id.toInt())
                 _uiStateFavorite.value = true
-        }
+        }.launchIn(viewModelScope)
         viewModelScope.launch {
-            _uiStateHistory.value = historyRepository.getHistoryRelease(release.id.toInt())
-            _uiStateHistory.value?.let { player.seekForward(it.timeEnd) }
+            historiesRelease = historyRepository.getHistoryRelease(release.id.toInt())
+            historiesRelease?.find { episode == it.episodeId.toInt() }.apply {
+                this?.let {
+                    player.seekForward(it.timeEnd) }
+                }
         }
     }
 

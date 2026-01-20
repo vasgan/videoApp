@@ -17,7 +17,7 @@ interface HistoryDao {
     suspend fun deleteById(id: Int): Int
 
     @Query("SELECT * FROM history WHERE releaseId = :id")
-    suspend fun getHistory(id: Int): History?
+    suspend fun getHistory(id: Int): List<History>?
 
     @Query("SELECT * FROM history")
     suspend fun getHistories(): List<History>?

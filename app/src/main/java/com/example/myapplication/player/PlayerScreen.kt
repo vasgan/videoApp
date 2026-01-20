@@ -3,6 +3,7 @@ package com.example.myapplication.player
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.PictureInPictureParams
+import android.util.Log
 import android.util.Rational
 import android.view.WindowManager
 import androidx.annotation.OptIn
@@ -58,6 +59,7 @@ import com.example.myapplication.ui.setFullscreen
 import com.example.myapplication.ui.theme.PlayerColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @SuppressLint("ResourceAsColor")
@@ -89,13 +91,12 @@ fun PlayerScreen(
     val playerState by viewModel.playerState.collectAsState()
     val dragging by viewModel.draggingState.collectAsState()
     val isFavorite by viewModel.favoriteUiState.collectAsState()
-    val uiStateHistory by viewModel.uiStateHistory.collectAsState()
     val uiStateShowOpening by viewModel.uiStateShowOpening.collectAsState()
     val uiStateShowEnding by viewModel.uiStateShowEnding.collectAsState()
 
-/*    val mediaSession = remember {
-        MediaSession.Builder(context, exoPlayer).build()
-    }*/
+    /*    val mediaSession = remember {
+            MediaSession.Builder(context, exoPlayer).build()
+        }*/
 
     fun changeEpisode(episodeNum: Int) {
         viewModel.onChangeEpisode(episodeNum)
@@ -117,7 +118,7 @@ fun PlayerScreen(
     }
 
     LaunchedEffect(viewModel.player.player) {
-        while (true) {
+        while (isActive) {
             viewModel.player.player?.let { viewModel.changePosition(it.currentPosition) }
             viewModel.player.player?.let { duration = it.duration }
             delay(500)
@@ -150,9 +151,15 @@ fun PlayerScreen(
                 newPosition: Player.PositionInfo,
                 reason: Int
             ) {
+                Log.e("ololololololo", oldPosition.toString())
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                     wasSeek = true
-                    viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
+                    viewModel.player.player?.let {
+                        viewModel.updateHistory(
+                            it.currentPosition,
+                            doubers
+                        )
+                    }
                 }
             }
 
@@ -161,7 +168,12 @@ fun PlayerScreen(
                     wasSeek = false
                     viewModel.draggingEnd()
                 }
-                viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
+                viewModel.player.player?.let {
+                    viewModel.updateHistory(
+                        it.currentPosition,
+                        doubers
+                    )
+                }
             }
         })
         val window = (context as Activity).window
@@ -169,7 +181,7 @@ fun PlayerScreen(
         onDispose {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
-            activity?.setFullscreen(true)
+            activity?.setFullscreen(false)
             //mediaSession.release()
         }
     }
@@ -264,7 +276,7 @@ fun PlayerScreen(
                     val params = PictureInPictureParams.Builder()
                         .setAspectRatio(aspect)
                         .build()
-    //                activity?.enterPictureInPictureMode(params)
+                    //                activity?.enterPictureInPictureMode(params)
                 }, {
                     showChangeQuality = true
                 }, {
@@ -377,7 +389,7 @@ fun PlayerScreen(
     }
 
     if (showChangeQuality) {
-        viewModel.player.player?.let {player ->
+        viewModel.player.player?.let { player ->
             OpenSettings(
                 availableVideoHeights(player),
                 {

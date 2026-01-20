@@ -113,7 +113,10 @@ class ReleaseScreenViewModel @Inject constructor(
 
     private fun getHistory(id: Int) {
         viewModelScope.launch {
-            _uiStateHistory.value = watchHistoryRepository.getHistoryRelease(id)
+            watchHistoryRepository.getHistoryRelease(id)?.let {
+                if (it.isNotEmpty())
+                _uiStateHistory.value = it[0]
+            }
         }
     }
 
