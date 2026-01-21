@@ -97,7 +97,7 @@ fun PlayerScreen(
     /*    val mediaSession = remember {
             MediaSession.Builder(context, exoPlayer).build()
         }*/
-
+    //todo вынести всю работу с playeroм в менеджер
     fun changeEpisode(episodeNum: Int) {
         viewModel.onChangeEpisode(episodeNum)
         viewModel.player.player?.stop()
