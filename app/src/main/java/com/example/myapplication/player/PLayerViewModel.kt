@@ -62,17 +62,19 @@ class PLayerViewModel @Inject constructor(
     private val _uiStateShowEnding: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiStateShowEnding: StateFlow<Boolean> = _uiStateShowEnding.asStateFlow()
 
-    private var hideViewsJob: Job? = null
-
-    private val manager = PlayerManager()
     private var historiesRelease: List<History>? = null
 
-    val player: PlayerManager get() = manager
+    private var hideViewsJob: Job? = null
+    val manager = PlayerManager()
+
+    val playerManager: PlayerManager get() = manager
+    private var doubersVm = ""
 
     fun initPlayer(context: Context, episode: Int, release: Release) {
         manager.initPlayer(context,  release.episodes[episode].hls480)
     }
-    fun initViewModel(episode: Int, release: Release) {
+    fun initViewModel(episode: Int, release: Release, doubers: String) {
+        doubersVm = doubers
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
         favoriteRepository.getFavorite(release.id.toInt()).onEach {
@@ -83,7 +85,7 @@ class PLayerViewModel @Inject constructor(
             historiesRelease = historyRepository.getHistoryRelease(release.id.toInt())
             historiesRelease?.find { episode == it.episodeId.toInt() }.apply {
                 this?.let {
-                    player.seekForward(it.timeEnd) }
+                    manager.seekForward(it.timeEnd) }
                 }
         }
     }
@@ -107,7 +109,13 @@ class PLayerViewModel @Inject constructor(
     }
 
     fun fastSpeed() {
+        manager.player?.setPlaybackSpeed(2f)
         _uiStateSupportView.value = SupportView.OnSpeedX2()
+    }
+
+    fun normalSpeed() {
+        manager.player?.setPlaybackSpeed(1f)
+        _uiStateSupportView.value = SupportView.OnShowEnd()
     }
 
     fun endShowSupportView() {
@@ -148,6 +156,12 @@ class PLayerViewModel @Inject constructor(
     }
 
     fun onChangeEpisode(episodeNum: Int) {
+        _uiStateRelease.value?.episodes?.let {
+            if (episodeNum >= it.size) {
+                return
+            }
+        }
+        manager.changeEpisode(_uiStateRelease.value?.episodes[episodeNum]?.hls480 ?: "")
         hideViews()
         _uiStateEpisode.value = episodeNum
     }
@@ -160,20 +174,22 @@ class PLayerViewModel @Inject constructor(
         _uiStatePlayerSeek.value = SeekToState.OnNext()
     }
 
-    fun updateHistory(position: Long, doubers: String) {
+    fun updateHistory() {
         viewModelScope.launch {
-            historyRepository.addToHistory(
-                History(
-                    uiStateRelease.value?.id?.toInt() ?: 0,
-                    doubers,
-                    uiStateRelease.value?.name ?: "",
-                    uiStateEpisode.value.toString(),
-                    uiStateEpisode.value,
-                    position,
-                    System.currentTimeMillis(),
-                    uiStateRelease.value?.poster.toString()
+            manager.player?.let {
+                historyRepository.addToHistory(
+                    History(
+                        uiStateRelease.value?.id?.toInt() ?: 0,
+                        doubersVm,
+                        uiStateRelease.value?.name ?: "",
+                        uiStateEpisode.value.toString(),
+                        uiStateEpisode.value,
+                        it.currentPosition,
+                        System.currentTimeMillis(),
+                        uiStateRelease.value?.poster.toString()
+                    )
                 )
-            )
+            }
         }
     }
 

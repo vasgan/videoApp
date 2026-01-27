@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Anime Wath</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="genres">Жанры:</string>
     <string name="season">Сезон:</string>

@@ -3,7 +3,6 @@ package com.example.myapplication.player
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.PictureInPictureParams
-import android.util.Log
 import android.util.Rational
 import android.view.WindowManager
 import androidx.annotation.OptIn
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.C
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.util.UnstableApi
@@ -100,27 +98,18 @@ fun PlayerScreen(
     //todo вынести всю работу с playeroм в менеджер
     fun changeEpisode(episodeNum: Int) {
         viewModel.onChangeEpisode(episodeNum)
-        viewModel.player.player?.stop()
-        viewModel.player.player?.clearMediaItems()
-        release?.episodes[episodeNum]?.hls480?.let {
-            viewModel.player.player?.setMediaItem(
-                MediaItem.fromUri(it),
-                true
-            )
-        }
-        viewModel.player.player?.prepare()
-        viewModel.player.player?.playWhenReady = true
         showSeriesList = false
     }
     viewModel.initPlayer(context, episodeCount, releaseBase)
+
     LaunchedEffect(Unit) {
-        viewModel.initViewModel(episodeCount, releaseBase)
+        viewModel.initViewModel(episodeCount, releaseBase, doubers)
     }
 
-    LaunchedEffect(viewModel.player.player) {
+    LaunchedEffect(viewModel.playerManager.player) {
         while (isActive) {
-            viewModel.player.player?.let { viewModel.changePosition(it.currentPosition) }
-            viewModel.player.player?.let { duration = it.duration }
+            viewModel.playerManager.player?.let { viewModel.changePosition(it.currentPosition) }
+            viewModel.playerManager.player?.let { duration = it.duration }
             delay(500)
         }
     }
@@ -130,36 +119,30 @@ fun PlayerScreen(
             .fillMaxSize(),
         factory = {
             PlayerView(it).apply {
-                player = viewModel.player.player
+                player = viewModel.playerManager.player
                 useController = false
                 setBackgroundColor(context.getColor(R.color.black))
             }
         },
         update = { view ->
-            val p = viewModel.player.player
-            if (view.player !== p) {
-                view.player = p
+            if (view.player !== viewModel.playerManager.player) {
+                view.player = viewModel.playerManager.player
             }
             view.useController = false
         }
     )
-    DisposableEffect(viewModel.player.player) {
-        viewModel.player.player?.addListener(object : Player.Listener {
+
+    DisposableEffect(viewModel.playerManager.player) {
+        viewModel.playerManager.player?.addListener(object : Player.Listener {
             private var wasSeek = false
             override fun onPositionDiscontinuity(
                 oldPosition: Player.PositionInfo,
                 newPosition: Player.PositionInfo,
                 reason: Int
             ) {
-                Log.e("ololololololo", oldPosition.toString())
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                     wasSeek = true
-                    viewModel.player.player?.let {
-                        viewModel.updateHistory(
-                            it.currentPosition,
-                            doubers
-                        )
-                    }
+                    viewModel.updateHistory()
                 }
             }
 
@@ -168,19 +151,14 @@ fun PlayerScreen(
                     wasSeek = false
                     viewModel.draggingEnd()
                 }
-                viewModel.player.player?.let {
-                    viewModel.updateHistory(
-                        it.currentPosition,
-                        doubers
-                    )
-                }
+                viewModel.updateHistory()
             }
         })
         val window = (context as Activity).window
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onDispose {
+            viewModel.updateHistory()
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            viewModel.player.player?.let { viewModel.updateHistory(it.currentPosition, doubers) }
             activity?.setFullscreen(false)
             //mediaSession.release()
         }
@@ -221,8 +199,6 @@ fun PlayerScreen(
                             delay(500) // 1 секунда удержания
                             weStart = true
                             viewModel.fastSpeed()
-                            viewModel.player.player?.setPlaybackSpeed(2f)
-
                         }
                         val released = try {
                             tryAwaitRelease()
@@ -233,8 +209,7 @@ fun PlayerScreen(
                         if (released) {
                             job.cancel() // Если отпустили раньше 1 сек — отменяем
                             if (weStart) {
-                                viewModel.endShowSupportView()
-                                viewModel.player.player?.setPlaybackSpeed(1f)
+                                viewModel.normalSpeed()
                             }
                         }
                     }
@@ -281,11 +256,11 @@ fun PlayerScreen(
                     showChangeQuality = true
                 }, {
                     release?.episodes[episodeCount]?.ending?.end?.toLong()
-                        ?.let { viewModel.player.player?.seekTo(it * 1000) }
+                        ?.let { viewModel.manager.player?.seekTo(it * 1000) }
                 }, {
 
                     release?.episodes[episodeCount]?.opening?.end?.toLong()
-                        ?.let { viewModel.player.player?.seekTo(it * 1000) }
+                        ?.let { viewModel.manager.player?.seekTo(it * 1000) }
                 }
             )
             //Кнопки переключить серию, плей пауз
@@ -316,7 +291,7 @@ fun PlayerScreen(
                 }
             )
             //скролл плейра
-            viewModel.player.player?.bufferedPercentage?.toFloat()?.let {
+            viewModel.manager.player?.bufferedPercentage?.toFloat()?.let {
                 PlayerSlider(
                     modifier = Modifier
                         .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
@@ -325,7 +300,7 @@ fun PlayerScreen(
                     playerDurationMs = duration,
                     bufferedFraction = it / 100,
                     onSeekMs = {
-                        viewModel.player.player?.seekTo(it)
+                        viewModel.manager.player?.seekTo(it)
                     },
                     onChangePositionStart = { dragPosition ->
                         draggingPosition = dragPosition
@@ -353,13 +328,13 @@ fun PlayerScreen(
     }
     when (seekTo) {
         is SeekToState.OnNext -> {
-            viewModel.player.player?.currentPosition?.let { viewModel.player.player?.seekTo(it + 1000 * secondsSeek) }
+            viewModel.manager.player?.currentPosition?.let { viewModel.manager.player?.seekTo(it + 1000 * secondsSeek) }
             viewModel.seekEnd()
             secondsSeek = 0
         }
 
         is SeekToState.OnPrevious -> {
-            viewModel.player.player?.let {
+            viewModel.manager.player?.let {
                 it.seekTo(it.currentPosition + 1000 * secondsSeek)
             }
             viewModel.seekEnd()
@@ -371,7 +346,7 @@ fun PlayerScreen(
         }
     }
 
-    viewModel.player.player?.let { player ->
+    viewModel.manager.player?.let { player ->
         when (playerState) {
             is PlayerState.OnPlay -> if (!player.isPlaying) player.play()
             is PlayerState.OnPause -> if (player.isPlaying) player.pause()
@@ -389,7 +364,7 @@ fun PlayerScreen(
     }
 
     if (showChangeQuality) {
-        viewModel.player.player?.let { player ->
+        viewModel.manager.player?.let { player ->
             OpenSettings(
                 availableVideoHeights(player),
                 {
@@ -565,7 +540,6 @@ fun availableVideoHeights(player: ExoPlayer): List<Int> {
     return set.toList().sortedDescending()
 }
 
-@OptIn(UnstableApi::class)
 fun selectVideoHeight(player: ExoPlayer, targetHeight: Int) {
     val groups = player.currentTracks.groups
         .filter { it.type == C.TRACK_TYPE_VIDEO && it.isSupported }

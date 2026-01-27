@@ -47,14 +47,14 @@ class PlayerManager {
     }
 
     fun changeEpisode(url: String) {
+        if (url.isBlank() || url.isEmpty()) return
         checkInit()
         val mediaItem = MediaItem.fromUri(url)
         if (lastMediaItem != mediaItem) {
             lastMediaItem = mediaItem
             _player?.setMediaItem(mediaItem)
             _player?.prepare()
-            _player?.seekTo(lastPositionMs)
-            _player?.playWhenReady = playWhenReady
+            _player?.playWhenReady = true
         }
     }
 

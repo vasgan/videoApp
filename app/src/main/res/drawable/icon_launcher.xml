@@ -1,0 +1,102 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+
+    <!-- Background (rounded square) -->
+    <path
+        android:fillColor="#0B0B10"
+        android:pathData="M254,64
+            H770
+            C875,64 960,149 960,254
+            V770
+            C960,875 875,960 770,960
+            H254
+            C149,960 64,875 64,770
+            V254
+            C64,149 149,64 254,64
+            Z" />
+
+    <!-- Soft blue glow (simple, no noise) -->
+    <path
+        android:fillColor="#2FD3FF"
+        android:fillAlpha="0.18"
+        android:pathData="M300,540
+            C420,360 650,250 860,320
+            C940,346 980,420 955,500
+            C925,600 800,710 640,740
+            C470,770 340,690 300,540
+            Z" />
+
+    <!-- Triangle outline -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.92"
+        android:strokeWidth="20"
+        android:strokeLineJoin="round"
+        android:pathData="M700,240 L900,620 L520,820 L320,440 Z" />
+
+    <!-- Brush stroke (blue) -->
+    <path
+        android:fillColor="#2A8BFF"
+        android:fillAlpha="0.62"
+        android:pathData="M520,350
+            C650,300 820,320 905,420
+            C840,420 780,440 720,470
+            C660,500 590,525 515,525
+            C460,525 420,515 400,505
+            C420,430 460,380 520,350
+            Z" />
+
+    <!-- Brush stroke (light) -->
+    <path
+        android:fillColor="#E9F0FF"
+        android:fillAlpha="0.70"
+        android:pathData="M515,525
+            C600,525 690,500 780,460
+            C840,435 880,425 920,425
+            C915,465 895,500 860,520
+            C780,565 680,595 570,595
+            C510,595 455,585 415,565
+            C440,545 475,532 515,525
+            Z" />
+
+    <!-- Red ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF2E3A"
+        android:strokeWidth="56"
+        android:pathData="M360,300
+            A260,260 0 1,1 359.9,300 Z" />
+
+    <!-- Stylized A -->
+    <path
+        android:fillColor="#FF2E3A"
+        android:pathData="M240,690
+            L340,410
+            C350,380 390,380 400,410
+            L500,690
+            L440,690
+            L414,625
+            H326
+            L300,690
+            Z
+            M346,570
+            H394
+            L370,500
+            Z" />
+
+    <!-- Stylized L -->
+    <path
+        android:fillColor="#FF2E3A"
+        android:pathData="M520,420
+            H580
+            V650
+            H740
+            V710
+            H520
+            Z" />
+
+</vector>
