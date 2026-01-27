@@ -92,6 +92,9 @@ class PLayerViewModel @Inject constructor(
                 _uiStateHistoryPosition.value = it.timeEnd
             }
         }
+        if (_uiStateHistoryPosition.value == null) {
+            _uiStateHistoryPosition.value = 0L
+        }
     }
 
     fun outClick() {
@@ -232,16 +235,19 @@ class PLayerViewModel @Inject constructor(
                 }
         }
     }
+
     fun getCurrentEpisodeParam(): CurrentEpisodeParam {
-        val url = uiStateRelease.value?.episodes[_uiStateEpisode.value]?.hls480
-        val time = historiesRelease?.find { history -> history.episodeNumber == _uiStateEpisode.value }?.timeEnd
+        var url = uiStateRelease.value?.episodes[_uiStateEpisode.value]?.hls480
+        if (url.isNullOrBlank()) url = ""
+        var time = historiesRelease?.find { history -> history.episodeNumber == _uiStateEpisode.value }?.timeEnd
+        if (time == null) time = 0L
         return CurrentEpisodeParam(url, time)
     }
 }
 
 data class CurrentEpisodeParam(
-    val url: String?,
-    val timeStart: Long?
+    val url: String,
+    val timeStart: Long
 )
 
 sealed class PlayerState {

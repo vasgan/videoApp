@@ -108,10 +108,7 @@ fun PlayerScreen(
         if (started) return@LaunchedEffect
         started = true
         viewModel.getCurrentEpisodeParam().let {
-            val mediaItem = it.url?.let { uri -> MediaItem.fromUri(uri) }
-            mediaItem?.let {
-                it1 -> control?.setMediaItem(it1, uiStateHistory!!)
-            }
+            control?.setMediaItem(MediaItem.fromUri(it.url), uiStateHistory!!)
         }
         control?.prepare()
         control?.playWhenReady = true
@@ -129,14 +126,9 @@ fun PlayerScreen(
             control?.currentPosition?.let {
                 viewModel.onChangeEpisode(episodeNum, it)
             }
-            val episode = viewModel.getCurrentEpisodeParam()
-            val mediaItem = episode.url?.let { MediaItem.fromUri(it) }
-            var start = episode.timeStart
-            if (mediaItem == null) return
-            if (start == null) {
-                start = 0L
+            viewModel.getCurrentEpisodeParam().let {
+                control?.setMediaItem(MediaItem.fromUri(it.url), it.timeStart)
             }
-            control?.setMediaItem(mediaItem, start)
             control?.prepare()
             control?.playWhenReady = true
             showSeriesList = false
@@ -185,6 +177,11 @@ fun PlayerScreen(
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             onDispose {
                 viewModel.updateHistory(control!!.currentPosition)
+                control?.run {
+                    pause()
+                    stop()
+                    clearMediaItems()
+                }
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 activity?.setFullscreen(false)
             }
