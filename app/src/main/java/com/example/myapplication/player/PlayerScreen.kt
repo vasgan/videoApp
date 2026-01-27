@@ -2,8 +2,7 @@ package com.example.myapplication.player
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.PictureInPictureParams
-import android.util.Rational
+import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -35,6 +34,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,11 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.findActivity
@@ -67,8 +67,9 @@ fun PlayerScreen(
     viewModel: PLayerViewModel,
     releaseBase: Release,
     doubers: String,
-    mediaSession: MediaSession?,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    PipCallback: () -> Unit,
+    ConnectController: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     val activity = context.findActivity()
@@ -91,289 +92,316 @@ fun PlayerScreen(
     val isFavorite by viewModel.favoriteUiState.collectAsState()
     val uiStateShowOpening by viewModel.uiStateShowOpening.collectAsState()
     val uiStateShowEnding by viewModel.uiStateShowEnding.collectAsState()
-
-    /*    val mediaSession = remember {
-            MediaSession.Builder(context, exoPlayer).build()
-        }*/
-    //todo вынести всю работу с playeroм в менеджер
-    fun changeEpisode(episodeNum: Int) {
-        viewModel.onChangeEpisode(episodeNum)
-        showSeriesList = false
-    }
-    viewModel.initPlayer(context, episodeCount, releaseBase)
+    val uiStateHistory by viewModel.uiStateHistoryPosition.collectAsState()
+    var started by rememberSaveable { mutableStateOf(false) }
+    var control by remember { mutableStateOf<MediaController?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.initViewModel(episodeCount, releaseBase, doubers)
-    }
-
-    LaunchedEffect(viewModel.playerManager.player) {
-        while (isActive) {
-            viewModel.playerManager.player?.let { viewModel.changePosition(it.currentPosition) }
-            viewModel.playerManager.player?.let { duration = it.duration }
-            delay(500)
+        ConnectController { controller ->
+            control = controller
         }
     }
 
-    AndroidView(
-        modifier = Modifier
-            .fillMaxSize(),
-        factory = {
-            PlayerView(it).apply {
-                player = viewModel.playerManager.player
-                useController = false
-                setBackgroundColor(context.getColor(R.color.black))
+    LaunchedEffect(control, uiStateHistory) {
+        if (control == null || uiStateHistory == null) return@LaunchedEffect
+        if (started) return@LaunchedEffect
+        started = true
+        viewModel.getCurrentEpisodeParam().let {
+            val mediaItem = it.url?.let { uri -> MediaItem.fromUri(uri) }
+            mediaItem?.let {
+                it1 -> control?.setMediaItem(it1, uiStateHistory!!)
             }
-        },
-        update = { view ->
-            if (view.player !== viewModel.playerManager.player) {
-                view.player = viewModel.playerManager.player
-            }
-            view.useController = false
         }
-    )
+        control?.prepare()
+        control?.playWhenReady = true
+    }
 
-    DisposableEffect(viewModel.playerManager.player) {
-        viewModel.playerManager.player?.addListener(object : Player.Listener {
-            private var wasSeek = false
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int
-            ) {
-                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-                    wasSeek = true
-                    viewModel.updateHistory()
+    if (control != null) {
+        LaunchedEffect(control) {
+            while (isActive) {
+                control?.let { viewModel.changePosition(it.currentPosition) }
+                control?.let { duration = it.duration }
+                delay(500)
+            }
+        }
+        fun changeEpisode(episodeNum: Int) {
+            control?.currentPosition?.let {
+                viewModel.onChangeEpisode(episodeNum, it)
+            }
+            val episode = viewModel.getCurrentEpisodeParam()
+            val mediaItem = episode.url?.let { MediaItem.fromUri(it) }
+            var start = episode.timeStart
+            if (mediaItem == null) return
+            if (start == null) {
+                start = 0L
+            }
+            control?.setMediaItem(mediaItem, start)
+            control?.prepare()
+            control?.playWhenReady = true
+            showSeriesList = false
+        }
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize(),
+            factory = {
+                PlayerView(it).apply {
+                    useController = false
+                    setBackgroundColor(context.getColor(R.color.black))
+                }
+            },
+            update = { view ->
+                if (control !== null) {
+                    view.player = control
+                }
+                view.useController = false
+            }
+        )
+
+        DisposableEffect(control) {
+            control!!.addListener(object : Player.Listener {
+                private var wasSeek = false
+                override fun onPositionDiscontinuity(
+                    oldPosition: Player.PositionInfo,
+                    newPosition: Player.PositionInfo,
+                    reason: Int
+                ) {
+                    if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                        wasSeek = true
+                        viewModel.updateHistory(control!!.currentPosition)
+                    }
+                }
+
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (wasSeek && isPlaying) {
+                        wasSeek = false
+                        viewModel.draggingEnd()
+                    }
+                    viewModel.updateHistory(control!!.currentPosition)
+                }
+            })
+            val window = (context as Activity).window
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            onDispose {
+                viewModel.updateHistory(control!!.currentPosition)
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                activity?.setFullscreen(false)
+            }
+        }
+
+        var jobMoving: Job? = null
+        Box(
+            Modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { offset ->
+                            if (offset.x > size.width / 2f) {
+                                jobMoving?.cancel()
+                                jobMoving = scope.launch {
+                                    viewModel.showForward()
+                                    secondsSeek += 10
+                                    delay(500)
+                                    viewModel.onSeekForward()
+                                    viewModel.endShowSupportView()
+                                }
+                            } else {
+                                jobMoving?.cancel()
+                                jobMoving = scope.launch {
+                                    viewModel.showBackward()
+                                    secondsSeek -= 10
+                                    delay(500)
+                                    viewModel.onSeekBackward()
+                                    viewModel.endShowSupportView()
+                                }
+                            }
+                        },
+                        onTap = {
+                            viewModel.outClick()
+                        },
+                        onPress = {
+                            var weStart = false
+                            val job = scope.launch {
+                                delay(500) // 1 секунда удержания
+                                weStart = true
+                                viewModel.fastSpeed()
+                            }
+                            val released = try {
+                                tryAwaitRelease()
+                                true
+                            } catch (_: Exception) {
+                                false
+                            }
+                            if (released) {
+                                job.cancel() // Если отпустили раньше 1 сек — отменяем
+                                if (weStart) {
+                                    viewModel.normalSpeed()
+                                }
+                            }
+                        }
+                    )
+                }
+                .fillMaxSize(),
+        ) {
+            when (showSupportView) {
+                is SupportView.OnShowEnd -> {
+                    control?.setPlaybackSpeed(1f)
+                }
+
+                is SupportView.OnSkepBackWard ->
+                    SupportPlayerView(Modifier.align(Alignment.TopCenter), "$secondsSeek sec")
+
+                is SupportView.OnSkepForward ->
+                    SupportPlayerView(Modifier.align(Alignment.TopCenter), "$secondsSeek sec")
+
+                is SupportView.OnSpeedX2 -> {
+                    control?.setPlaybackSpeed(2f)
+                    SupportPlayerView(Modifier.align(Alignment.TopCenter), "x2")
                 }
             }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (wasSeek && isPlaying) {
-                    wasSeek = false
-                    viewModel.draggingEnd()
-                }
-                viewModel.updateHistory()
-            }
-        })
-        val window = (context as Activity).window
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        onDispose {
-            viewModel.updateHistory()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            activity?.setFullscreen(false)
-            //mediaSession.release()
         }
-    }
 
-    var jobMoving: Job? = null
-    Box(
-        Modifier
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = { offset ->
-                        if (offset.x > size.width / 2f) {
-                            jobMoving?.cancel()
-                            jobMoving = scope.launch {
-                                viewModel.showForward()
-                                secondsSeek += 10
-                                delay(500)
-                                viewModel.onSeekForward()
-                                viewModel.endShowSupportView()
-                            }
-                        } else {
-                            jobMoving?.cancel()
-                            jobMoving = scope.launch {
-                                viewModel.showBackward()
-                                secondsSeek -= 10
-                                delay(500)
-                                viewModel.onSeekBackward()
-                                viewModel.endShowSupportView()
-                            }
-                        }
-                    },
-                    onTap = {
-                        viewModel.outClick()
-                    },
-                    onPress = {
-                        var weStart = false
-                        val job = scope.launch {
-                            delay(500) // 1 секунда удержания
-                            weStart = true
-                            viewModel.fastSpeed()
-                        }
-                        val released = try {
-                            tryAwaitRelease()
-                            true
-                        } catch (_: Exception) {
-                            false
-                        }
-                        if (released) {
-                            job.cancel() // Если отпустили раньше 1 сек — отменяем
-                            if (weStart) {
-                                viewModel.normalSpeed()
-                            }
-                        }
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(600)),
+            exit = fadeOut(animationSpec = tween(600))
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                //Нижние кнопки
+                BottomButtons(
+                    Modifier
+                        .align(Alignment.BottomEnd),
+                    isFavorite,
+                    uiStateShowOpening,
+                    uiStateShowEnding, {
+                        viewModel.onFavoriteClick()
+                    }, {
+                        // todo picture in picture
+                        Log.e("ololololololo", "first go to pip")
+                        viewModel.urgentlyHideViews()
+                        control?.let { PipCallback() }
+                    }, {
+                        showChangeQuality = true
+                    }, {
+                        release?.episodes[episodeCount]?.ending?.end?.toLong()
+                            ?.let { control?.seekTo(it * 1000) }
+                    }, {
+                        release?.episodes[episodeCount]?.opening?.end?.toLong()
+                            ?.let { control?.seekTo(it * 1000) }
                     }
                 )
-            }
-            .fillMaxSize(),
-    ) {
-        when (showSupportView) {
-            is SupportView.OnShowEnd -> {}
-
-            is SupportView.OnSkepBackWard ->
-                SupportPlayerView(Modifier.align(Alignment.TopCenter), "$secondsSeek sec")
-
-            is SupportView.OnSkepForward ->
-                SupportPlayerView(Modifier.align(Alignment.TopCenter), "$secondsSeek sec")
-
-            is SupportView.OnSpeedX2 ->
-                SupportPlayerView(Modifier.align(Alignment.TopCenter), "x2")
-        }
-    }
-
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(600)),
-        exit = fadeOut(animationSpec = tween(600))
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            //Нижние кнопки
-            BottomButtons(
-                Modifier
-                    .align(Alignment.BottomEnd),
-                isFavorite,
-                uiStateShowOpening,
-                uiStateShowEnding, {
-                    viewModel.onFavoriteClick()
-                }, {
-                    viewModel.urgentlyHideViews()
-                    val aspect = Rational(16, 9)
-                    val params = PictureInPictureParams.Builder()
-                        .setAspectRatio(aspect)
-                        .build()
-                    //                activity?.enterPictureInPictureMode(params)
-                }, {
-                    showChangeQuality = true
-                }, {
-                    release?.episodes[episodeCount]?.ending?.end?.toLong()
-                        ?.let { viewModel.manager.player?.seekTo(it * 1000) }
-                }, {
-
-                    release?.episodes[episodeCount]?.opening?.end?.toLong()
-                        ?.let { viewModel.manager.player?.seekTo(it * 1000) }
+                //Кнопки переключить серию, плей пауз
+                PlayerControls(
+                    playerState,
+                    seekBack = {
+                        changeEpisode(episodeNumber - 1)
+                    }, playerPause = {
+                        viewModel.pauseClick()
+                    }, playerPlay = {
+                        viewModel.playClick()
+                    }, seekForward = {
+                        changeEpisode(episodeNumber + 1)
+                    })
+                //Верхний бар плеера
+                TopBarPlayer(
+                    Modifier
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .align(Alignment.TopCenter),
+                    release,
+                    episodeNumber,
+                    {
+                        activity?.setFullscreen(false)
+                        onBackClick()
+                    }, {
+                    }, {
+                        showSeriesList = true
+                    }
+                )
+                //скролл плейра
+                control?.bufferedPercentage?.toFloat()?.let {
+                    PlayerSlider(
+                        modifier = Modifier
+                            .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
+                            .align(Alignment.BottomStart),
+                        playerPositionMs = position,
+                        playerDurationMs = duration,
+                        bufferedFraction = it / 100,
+                        onSeekMs = {
+                            control?.seekTo(it)
+                        },
+                        onChangePositionStart = { dragPosition ->
+                            draggingPosition = dragPosition
+                            viewModel.dragging()
+                        })
                 }
-            )
-            //Кнопки переключить серию, плей пауз
-            PlayerControls(
-                playerState,
-                seekBack = {
-                    changeEpisode(episodeNumber - 1)
-                }, playerPause = {
-                    viewModel.pauseClick()
-                }, playerPlay = {
-                    viewModel.playClick()
-                }, seekForward = {
-                    changeEpisode(episodeNumber + 1)
-                })
-            //Верхний бар плеера
-            TopBarPlayer(
-                Modifier
-                    .padding(end = 16.dp, bottom = 16.dp)
-                    .align(Alignment.TopCenter),
-                release,
-                episodeNumber,
-                {
-                    activity?.setFullscreen(false)
-                    onBackClick()
-                }, {
-                }, {
-                    showSeriesList = true
-                }
-            )
-            //скролл плейра
-            viewModel.manager.player?.bufferedPercentage?.toFloat()?.let {
-                PlayerSlider(
+                //Текст показываюший время текущего трека
+                Text(
                     modifier = Modifier
-                        .padding(bottom = 48.dp, start = 16.dp, end = 16.dp)
-                        .align(Alignment.BottomStart),
-                    playerPositionMs = position,
-                    playerDurationMs = duration,
-                    bufferedFraction = it / 100,
-                    onSeekMs = {
-                        viewModel.manager.player?.seekTo(it)
+                        .padding(start = 32.dp, bottom = 24.dp)
+                        .align(Alignment.BottomStart)
+                        .clickable {
+                            viewModel.showCurrentTime()
+                        },
+                    text = calculateTimeString(
+                        position,
+                        duration,
+                        dragging,
+                        draggingPosition,
+                        isShowCurrentTime
+                    ),
+                    color = PlayerColor
+                )
+            }
+        }
+        when (seekTo) {
+            is SeekToState.OnNext -> {
+                control?.currentPosition?.let { control?.seekTo(it + 1000 * secondsSeek) }
+                viewModel.seekEnd()
+                secondsSeek = 0
+            }
+
+            is SeekToState.OnPrevious -> {
+                control?.let {
+                    it.seekTo(it.currentPosition + 1000 * secondsSeek)
+                }
+                viewModel.seekEnd()
+                secondsSeek = 0
+            }
+
+            is SeekToState.OnSeekEnd -> {
+
+            }
+        }
+
+        control?.let { player ->
+            when (playerState) {
+                is PlayerState.OnPlay -> if (!player.isPlaying) player.play()
+                is PlayerState.OnPause -> if (player.isPlaying) player.pause()
+            }
+        }
+
+        if (showSeriesList) {
+            release?.episodes?.let {
+                ChooseEpisodeDialog(it, {
+                    showSeriesList = false
+                }, {
+                    changeEpisode(it)
+                })
+            }
+        }
+
+        if (showChangeQuality) {
+            control?.let { player ->
+                OpenSettings(
+                    availableVideoHeights(player),
+                    {
+                        showChangeQuality = false
                     },
-                    onChangePositionStart = { dragPosition ->
-                        draggingPosition = dragPosition
-                        viewModel.dragging()
+                    {
+                        selectVideoHeight(player, it)
+                        showChangeQuality = false
                     })
             }
-            //Текст показываюший время текущего трека
-            Text(
-                modifier = Modifier
-                    .padding(start = 32.dp, bottom = 24.dp)
-                    .align(Alignment.BottomStart)
-                    .clickable {
-                        viewModel.showCurrentTime()
-                    },
-                text = calculateTimeString(
-                    position,
-                    duration,
-                    dragging,
-                    draggingPosition,
-                    isShowCurrentTime
-                ),
-                color = PlayerColor
-            )
-        }
-    }
-    when (seekTo) {
-        is SeekToState.OnNext -> {
-            viewModel.manager.player?.currentPosition?.let { viewModel.manager.player?.seekTo(it + 1000 * secondsSeek) }
-            viewModel.seekEnd()
-            secondsSeek = 0
-        }
-
-        is SeekToState.OnPrevious -> {
-            viewModel.manager.player?.let {
-                it.seekTo(it.currentPosition + 1000 * secondsSeek)
-            }
-            viewModel.seekEnd()
-            secondsSeek = 0
-        }
-
-        is SeekToState.OnSeekEnd -> {
-
-        }
-    }
-
-    viewModel.manager.player?.let { player ->
-        when (playerState) {
-            is PlayerState.OnPlay -> if (!player.isPlaying) player.play()
-            is PlayerState.OnPause -> if (player.isPlaying) player.pause()
-        }
-    }
-
-    if (showSeriesList) {
-        release?.episodes?.let {
-            ChooseEpisodeDialog(it, {
-                showSeriesList = false
-            }, {
-                changeEpisode(it)
-            })
-        }
-    }
-
-    if (showChangeQuality) {
-        viewModel.manager.player?.let { player ->
-            OpenSettings(
-                availableVideoHeights(player),
-                {
-                    showChangeQuality = false
-                },
-                {
-                    selectVideoHeight(player, it)
-                    showChangeQuality = false
-                })
         }
     }
 }
@@ -527,7 +555,7 @@ fun calculateTimeFromLongToString(timeInSec: Int): String {
 }
 
 @OptIn(UnstableApi::class)
-fun availableVideoHeights(player: ExoPlayer): List<Int> {
+fun availableVideoHeights(player: MediaController): List<Int> {
     val set = sortedSetOf<Int>()
     player.currentTracks.groups
         .filter { it.type == C.TRACK_TYPE_VIDEO && it.isSupported }
@@ -540,7 +568,8 @@ fun availableVideoHeights(player: ExoPlayer): List<Int> {
     return set.toList().sortedDescending()
 }
 
-fun selectVideoHeight(player: ExoPlayer, targetHeight: Int) {
+@OptIn(UnstableApi::class)
+fun selectVideoHeight(player: MediaController, targetHeight: Int) {
     val groups = player.currentTracks.groups
         .filter { it.type == C.TRACK_TYPE_VIDEO && it.isSupported }
     for (g in groups) {

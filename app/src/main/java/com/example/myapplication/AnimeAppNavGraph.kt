@@ -9,13 +9,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -57,7 +56,7 @@ import com.example.myapplication.settings.SettingsScreen
 import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreen
 import com.example.myapplication.watch.WatchScreenViewModel
-import kotlinx.coroutines.CoroutineScope
+import kotlin.Int
 
 sealed class Root(val route: String, val label: String, val icon: Int) {
     data object Home : Root(MAIN_SCREEN_ROUTE, "Home", R.drawable.baseline_home_24)
@@ -72,13 +71,13 @@ sealed class Root(val route: String, val label: String, val icon: Int) {
 @Composable
 fun AnimeAppNavGraph(
     modifier: Modifier = Modifier,
-    mediaSession: MediaSession?,
     navController: NavHostController = rememberNavController(),
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     startDestination: String = MAIN_SCREEN_ROUTE,
     navActions: AnimeNavigation = remember(navController) {
         AnimeNavigation(navController)
-    }, viewModelFactory: ViewModelProvider.Factory
+    }, viewModelFactory: ViewModelProvider.Factory,
+    PipCallBack: () -> Unit,
+    ConnectConntrroller: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val items = listOf(Root.Home, Root.Search, Root.GlobalSearch, Root.History, Root.Profile)
     val currentDestination by navController.currentBackStackEntryAsState()
@@ -166,11 +165,12 @@ fun AnimeAppNavGraph(
                             episodeCount = episodeId ?: 0,
                             viewModel = viewModel,
                             releaseBase = release,
+                            doubers = doubers,
                             onBackClick = {
                                 navController.popBackStack()
                             },
-                            mediaSession = mediaSession,
-                            doubers = doubers
+                            PipCallback = PipCallBack,
+                            ConnectController = ConnectConntrroller
                         )
                     }
                 }

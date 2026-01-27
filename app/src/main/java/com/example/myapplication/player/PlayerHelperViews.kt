@@ -95,47 +95,43 @@ fun ChooseEpisodeDialog(
     dismissDialog: () -> Unit,
     chooseEpisode: (episodeNumber: Int) -> Unit
 ) {
-    var openDialog by remember { mutableStateOf(true) }
-    if (openDialog) {
-        Dialog(
-            onDismissRequest = {
-                openDialog = false
-                dismissDialog()
-            }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                tonalElevation = 8.dp,
+    Dialog(
+        onDismissRequest = {
+            dismissDialog()
+        }) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    for (i in 0..episodes.size - 1) {
-                        val name =
-                            stringResource(
-                                R.string.series, (i + 1).toString(), episodes[i].name
-                            )
-                        Text(
-                            text = name,
-                            fontSize = 14.sp,
-                            maxLines = 3,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .clickable {
-                                    chooseEpisode(i)
-                                }
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .background(Color(0xFFE0E0E0))
-                                .padding(8.dp)
+                for (i in 0..< episodes.size) {
+                    val name =
+                        stringResource(
+                            R.string.series, (i + 1).toString(), episodes[i].name
                         )
-                    }
+                    Text(
+                        text = name,
+                        fontSize = 14.sp,
+                        maxLines = 3,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clickable {
+                                chooseEpisode(i)
+                            }
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .background(Color(0xFFE0E0E0))
+                            .padding(8.dp)
+                    )
                 }
             }
         }

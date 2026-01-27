@@ -1,6 +1,6 @@
 package com.example.myapplication.player
 
-import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -47,7 +47,7 @@ class PLayerViewModel @Inject constructor(
         MutableStateFlow(SupportView.OnShowEnd())
     val uiStateSpeedX2: StateFlow<SupportView> = _uiStateSupportView.asStateFlow()
 
-    private val _uiStateEpisode: MutableStateFlow<Int> = MutableStateFlow(0)
+    private val _uiStateEpisode: MutableStateFlow<Int> = MutableStateFlow(-1)
     val uiStateEpisode: StateFlow<Int> = _uiStateEpisode.asStateFlow()
 
     private val _uiStateRelease: MutableStateFlow<Release?> = MutableStateFlow(null)
@@ -62,18 +62,17 @@ class PLayerViewModel @Inject constructor(
     private val _uiStateShowEnding: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiStateShowEnding: StateFlow<Boolean> = _uiStateShowEnding.asStateFlow()
 
+    private val _uiStateHistoryPosition: MutableStateFlow<Long?> = MutableStateFlow( null)
+    val uiStateHistoryPosition: StateFlow<Long?> = _uiStateHistoryPosition.asStateFlow()
+
     private var historiesRelease: List<History>? = null
 
     private var hideViewsJob: Job? = null
-    val manager = PlayerManager()
 
-    val playerManager: PlayerManager get() = manager
     private var doubersVm = ""
 
-    fun initPlayer(context: Context, episode: Int, release: Release) {
-        manager.initPlayer(context,  release.episodes[episode].hls480)
-    }
     fun initViewModel(episode: Int, release: Release, doubers: String) {
+        if (_uiStateEpisode.value >= 0)
         doubersVm = doubers
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
@@ -83,10 +82,15 @@ class PLayerViewModel @Inject constructor(
         }.launchIn(viewModelScope)
         viewModelScope.launch {
             historiesRelease = historyRepository.getHistoryRelease(release.id.toInt())
-            historiesRelease?.find { episode == it.episodeId.toInt() }.apply {
-                this?.let {
-                    manager.seekForward(it.timeEnd) }
-                }
+            findEpisodeHistory(episode)
+        }
+    }
+
+    private fun findEpisodeHistory(episodeNum: Int) {
+        historiesRelease?.find { episodeNum == it.episodeId.toInt() }.apply {
+            this?.let {
+                _uiStateHistoryPosition.value = it.timeEnd
+            }
         }
     }
 
@@ -109,12 +113,10 @@ class PLayerViewModel @Inject constructor(
     }
 
     fun fastSpeed() {
-        manager.player?.setPlaybackSpeed(2f)
         _uiStateSupportView.value = SupportView.OnSpeedX2()
     }
 
     fun normalSpeed() {
-        manager.player?.setPlaybackSpeed(1f)
         _uiStateSupportView.value = SupportView.OnShowEnd()
     }
 
@@ -155,13 +157,14 @@ class PLayerViewModel @Inject constructor(
         _uiPLayerState.value = PlayerState.OnPlay()
     }
 
-    fun onChangeEpisode(episodeNum: Int) {
+    fun onChangeEpisode(episodeNum: Int, position: Long) {
+        findEpisodeHistory(episodeNum)
+        updateHistory(position)
         _uiStateRelease.value?.episodes?.let {
             if (episodeNum >= it.size) {
                 return
             }
         }
-        manager.changeEpisode(_uiStateRelease.value?.episodes[episodeNum]?.hls480 ?: "")
         hideViews()
         _uiStateEpisode.value = episodeNum
     }
@@ -174,22 +177,23 @@ class PLayerViewModel @Inject constructor(
         _uiStatePlayerSeek.value = SeekToState.OnNext()
     }
 
-    fun updateHistory() {
+    fun updateHistory(position: Long) {
+        val episodeNum = uiStateEpisode.value
+        val release = uiStateRelease.value
         viewModelScope.launch {
-            manager.player?.let {
-                historyRepository.addToHistory(
-                    History(
-                        uiStateRelease.value?.id?.toInt() ?: 0,
-                        doubersVm,
-                        uiStateRelease.value?.name ?: "",
-                        uiStateEpisode.value.toString(),
-                        uiStateEpisode.value,
-                        it.currentPosition,
-                        System.currentTimeMillis(),
-                        uiStateRelease.value?.poster.toString()
+            historyRepository.addToHistory(
+                History(
+                    release?.id?.toInt() ?: 0,
+                    doubersVm,
+                    release?.name ?: "",
+                    episodeNum.toString(),
+                    episodeNum,
+                    position,
+                    System.currentTimeMillis(),
+                    release?.poster.toString()
                     )
                 )
-            }
+            historiesRelease = release?.id?.toInt()?.let { historyRepository.getHistoryRelease(it) }
         }
     }
 
@@ -228,12 +232,17 @@ class PLayerViewModel @Inject constructor(
                 }
         }
     }
-
-    override fun onCleared() {
-        manager.endPlay()
-        super.onCleared()
+    fun getCurrentEpisodeParam(): CurrentEpisodeParam {
+        val url = uiStateRelease.value?.episodes[_uiStateEpisode.value]?.hls480
+        val time = historiesRelease?.find { history -> history.episodeNumber == _uiStateEpisode.value }?.timeEnd
+        return CurrentEpisodeParam(url, time)
     }
 }
+
+data class CurrentEpisodeParam(
+    val url: String?,
+    val timeStart: Long?
+)
 
 sealed class PlayerState {
     class OnPause() : PlayerState()
