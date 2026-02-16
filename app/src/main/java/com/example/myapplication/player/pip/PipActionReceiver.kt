@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.myapplication.MainActivity

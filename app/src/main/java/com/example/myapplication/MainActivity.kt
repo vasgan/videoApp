@@ -7,9 +7,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,7 +17,6 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import com.example.myapplication.player.pip.PipActionReceiver
-import com.example.myapplication.player.pip.PlayerService
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.google.common.util.concurrent.MoreExecutors
 import javax.inject.Inject
@@ -33,7 +30,6 @@ class MainActivity : ComponentActivity() {
     private var isInPipMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.getString(R.string.title_activity_main)
         super.onCreate(savedInstanceState)
         (this.applicationContext as VideoApplication).component.inject(this)
         enableEdgeToEdge()
@@ -42,7 +38,9 @@ class MainActivity : ComponentActivity() {
                 AnimeAppNavGraph(
                     viewModelFactory = viewModelFactory,
                     PipCallBack = {
-                        controller?.let { ctrl -> enterPip(ctrl) }
+                        controller?.let { ctrl ->
+                            enterPip(ctrl)
+                        }
                     },
                     ConnectConntrroller = { onReady ->
                         connectController(onReady)
