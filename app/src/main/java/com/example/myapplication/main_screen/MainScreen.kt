@@ -61,8 +61,8 @@ fun ListScreen(
     val historyAL by viewModel.uiStateHistory.collectAsState()
     val itemsAniliberty by viewModel.uiState.collectAsState()
     val itemsDreamCast by viewModel.uiDreamCastState.collectAsState()
-    val tabs = listOf(/*
-        stringResource(R.string.aniliberty),*/
+    val tabs = listOf(
+        stringResource(R.string.aniliberty),
         stringResource(R.string.dreamcast)
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -101,7 +101,7 @@ fun ListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 when (page) {
-                /*    0 ->
+                    0 ->
                         when (itemsAniliberty) {
                             is CompleteLoadAniliberty,
                             is LoadingNextAl ->
@@ -140,9 +140,9 @@ fun ListScreen(
                             }
 
                             null -> {}
-                        }*/
+                        }
 
-                    0 -> {
+                    1 -> {
                         when (itemsDreamCast) {
                             is LoadingNextDC,
                             is CompleteLoadDreamCast -> {
@@ -222,30 +222,3 @@ fun LoadingSpinner() {
     }
 }
 
-/*class WBWallet(initialBalance: Int, val owner: String) {
-    var balance: Int = initialBalance
-    val history: MutableList<Transaction> = mutableListOf()
-
-    fun deposit(amount: Int) {
-        balance += amount
-        history.add(Transaction("+$amount"))
-    }
-
-    fun withdraw(amount: Int) {
-        balance -= amount
-        history.add(Transaction("-$amount"))
-    }
-
-    fun transferTo(otherWallet: WBWallet, amount: Int) {
-        synchronized(this) {
-                balance -= amount
-                history.add(Transaction("-$amount"))
-                }
-
-                synchronized(otherWallet) {
-                otherWallet.balance += amount
-                otherWallet.history.add(Trnsaction("+$amount"))
-            }
-
-    }
-}*/

@@ -13,3 +13,6 @@ local.properties
 .gradle/
 /.gradle
 *.bin
+.idea/deploymentTargetSelector.xml
+.idea/caches/deviceStreaming.xml
+.idea/assetWizardSettings.xml
