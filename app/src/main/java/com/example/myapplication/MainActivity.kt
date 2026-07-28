@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                             enterPip(ctrl)
                         }
                     },
-                    ConnectConntrroller = { onReady ->
+                    ConnectController = { onReady ->
                         connectController(onReady)
                     })
             }

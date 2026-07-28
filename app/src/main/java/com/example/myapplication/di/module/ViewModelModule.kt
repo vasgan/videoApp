@@ -7,7 +7,7 @@ import com.example.myapplication.di.ViewModelKey
 import com.example.myapplication.favorite_screen.FavoriteScreenViewModel
 import com.example.myapplication.history_screen.HistoryViewModel
 import com.example.myapplication.main_screen.MainViewModel
-import com.example.myapplication.player.PLayerViewModel
+import com.example.myapplication.player.PlayerViewModel
 import com.example.myapplication.release_dreamcast.ReleaseDreamCastViewModel
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreenViewModel
@@ -47,8 +47,8 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(PLayerViewModel::class)
-    abstract fun bindPlayerScreenViewModel(playerScreenViewModel: PLayerViewModel): ViewModel
+    @ViewModelKey(PlayerViewModel::class)
+    abstract fun bindPlayerScreenViewModel(playerScreenViewModel: PlayerViewModel): ViewModel
 
     @Binds
     @IntoMap

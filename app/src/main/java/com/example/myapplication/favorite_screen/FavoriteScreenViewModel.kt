@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class FavoriteScreenViewModel @Inject constructor(
-    private val releaseRepository: ReleaseRepository,
+    private val releaseRepository: ReleaseRepository, // todo может пригодиться
     private val favoriteRepository: FavoriteRepository
 ) : ViewModel()  {
     private val _uiState: MutableStateFlow<Release?> = MutableStateFlow(null)
@@ -21,7 +21,7 @@ class FavoriteScreenViewModel @Inject constructor(
     val uiState: StateFlow<Release?> = _uiState.asStateFlow()
     val favoriteUiState: StateFlow<List<Favorite>?> = _uiStateFavorite.asStateFlow()
 
-    fun getFavorite() {
+    init {
         viewModelScope.launch {
             val favorites = favoriteRepository.getFavorites()
             _uiStateFavorite.value = favorites

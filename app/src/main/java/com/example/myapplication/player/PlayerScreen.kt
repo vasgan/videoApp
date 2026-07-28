@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlayerScreen(
     episodeCount: Int,
-    viewModel: PLayerViewModel,
+    viewModel: PlayerViewModel,
     releaseBase: Release,
     doubers: String,
     onBackClick: () -> Unit,

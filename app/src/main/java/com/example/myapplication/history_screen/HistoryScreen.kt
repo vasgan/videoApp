@@ -33,7 +33,6 @@ fun HistoryScreen(
     onBackClick: () -> Unit
 ) {
     val history by viewModel.historyUiState.collectAsStateWithLifecycle()
-    viewModel.getFavorite()
     Scaffold(
         topBar = {
             SimpleTopBar(R.string.history) { onBackClick() }

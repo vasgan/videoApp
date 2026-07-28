@@ -16,7 +16,7 @@ class WatchScreenViewModel @Inject constructor(
     private val _uiStateWatchList: MutableStateFlow<List<WatchListItem>?> = MutableStateFlow(null)
     val watchListUiState: StateFlow<List<WatchListItem>?> = _uiStateWatchList.asStateFlow()
 
-    fun getWatchRelease() {
+    init {
         viewModelScope.launch {
             val watchItems = watchRepository.getWatchItems()
             _uiStateWatchList.value = watchItems

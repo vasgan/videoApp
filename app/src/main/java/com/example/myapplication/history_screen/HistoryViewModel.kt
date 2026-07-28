@@ -1,5 +1,6 @@
 package com.example.myapplication.history_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -21,7 +22,7 @@ class HistoryViewModel @Inject constructor(
     val uiState: StateFlow<Release?> = _uiState.asStateFlow()
     val historyUiState: StateFlow<List<History>?> = _uiHistory.asStateFlow()
 
-    fun getFavorite() {
+    init {
         viewModelScope.launch {
             val histories = historyRepository.getHistory()
             _uiHistory.value = histories

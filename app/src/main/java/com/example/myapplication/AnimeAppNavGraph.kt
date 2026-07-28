@@ -52,7 +52,7 @@ import com.example.myapplication.history_screen.HistoryScreen
 import com.example.myapplication.history_screen.HistoryViewModel
 import com.example.myapplication.main_screen.ListScreen
 import com.example.myapplication.main_screen.MainViewModel
-import com.example.myapplication.player.PLayerViewModel
+import com.example.myapplication.player.PlayerViewModel
 import com.example.myapplication.player.PlayerScreen
 import com.example.myapplication.profile_screen.ProfileScreen
 import com.example.myapplication.release_dreamcast.ReleaseDreamCastScreen
@@ -86,7 +86,7 @@ fun AnimeAppNavGraph(
     },
     viewModelFactory: ViewModelProvider.Factory,
     PipCallBack: () -> Unit,
-    ConnectConntrroller: (onReady: (MediaController) -> Unit) -> Unit
+    ConnectController: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val items = listOf(Root.Home, Root.Search, Root.GlobalSearch, Root.History, Root.Profile)
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -301,7 +301,7 @@ fun AnimeAppNavGraph(
                 val doubers =
                     navController.previousBackStackEntry?.savedStateHandle?.get<String>(DOUBERS)
                 val episodeId: Int? = entry.arguments?.getString(PLAYER_URLS)?.toIntOrNull()
-                val viewModel: PLayerViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: PlayerViewModel = viewModel(factory = viewModelFactory)
                 release?.let {
                     doubers?.let { doubers ->
                         PlayerScreen(
@@ -313,7 +313,7 @@ fun AnimeAppNavGraph(
                                 navController.popBackStack()
                             },
                             PipCallback = PipCallBack,
-                            ConnectController = ConnectConntrroller
+                            ConnectController = ConnectController
                         )
                     }
                 }

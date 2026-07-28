@@ -24,7 +24,6 @@ fun WatchScreen(
     onBackClick: () -> Unit
 ) {
     val watchListItems by viewModel.watchListUiState.collectAsStateWithLifecycle()
-    viewModel.getWatchRelease()
     Scaffold(
         topBar = {
             SimpleTopBar(R.string.views_plans) { onBackClick() }

@@ -31,7 +31,6 @@ fun FavoriteScreen(
     onBackClick: () -> Unit
 ) {
     val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
-    viewModel.getFavorite()
     Scaffold(
         topBar = {
             SimpleTopBar(R.string.favorite) { onBackClick() }

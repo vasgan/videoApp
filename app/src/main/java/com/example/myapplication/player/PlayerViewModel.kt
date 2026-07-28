@@ -1,6 +1,5 @@
 package com.example.myapplication.player
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -18,7 +17,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class PLayerViewModel @Inject constructor(
+class PlayerViewModel @Inject constructor(
     private val repository: ReleaseRepository,
     private val favoriteRepository: FavoriteRepository,
     private val historyRepository: HistoryRepository
