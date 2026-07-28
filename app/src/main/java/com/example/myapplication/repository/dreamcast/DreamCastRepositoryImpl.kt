@@ -102,5 +102,4 @@ class DreamCastRepositoryImpl : DreamCastRepository {
         val decodedBytes = Base64.decode(encoded, Base64.DEFAULT)
         return String(decodedBytes, Charsets.UTF_8)
     }
-
 }

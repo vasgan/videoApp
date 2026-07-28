@@ -1,10 +1,8 @@
 package com.example.myapplication
 
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
-import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
-import com.example.myapplication.AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
@@ -15,6 +13,7 @@ import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
 import com.example.myapplication.AnimeScreens.DETAIL_RELEASE_SCREEN
 import com.example.myapplication.AnimeScreens.FAVORITE_SCREEN
+import com.example.myapplication.AnimeScreens.GLOBAL_SEARCH_SCREEN
 import com.example.myapplication.AnimeScreens.HISTORY_SCREEN
 import com.example.myapplication.AnimeScreens.MAIN_SCREEN
 import com.example.myapplication.AnimeScreens.PLAYER_SCREEN
@@ -32,6 +31,7 @@ private object AnimeScreens {
     const val SEARCH_SCREEN = "search_screen"
     const val DETAIL_RELEASE_SCREEN = "details_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val GLOBAL_SEARCH_SCREEN = "global_search_screen"
     const val FAVORITE_SCREEN = "favorite_screen"
     const val WILL_WATCH_SCREEN = "will_watch_screen"
     const val PLAYER_SCREEN = "player_screen"
@@ -55,21 +55,38 @@ object AnimeDestinations {
     const val CURRENT_RELEASE_ROUTE = "$DETAIL_RELEASE_SCREEN?$RELEASE_ID_ARG={$RELEASE_ID_ARG}"
     const val PROFILE_SCREEN_ROUTE = PROFILE_SCREEN
     const val FAVORITE_SCREEN_ROUTE = FAVORITE_SCREEN
+    const val GLOBAL_SEARCH_SCREEN_ROUTE = GLOBAL_SEARCH_SCREEN
     const val WILL_WATCH_SCREEN_ROUTE = WILL_WATCH_SCREEN
     const val HISTORY_SCREEN_ROUTE = HISTORY_SCREEN
+    const val PROFILE_HISTORY_SCREEN_ROUTE = "$PROFILE_SCREEN/$HISTORY_SCREEN"
     const val SETTINGS_SCREEN_ROUTE = SETTINGS_SCREEN
     const val PLAYER_SCREEN_ROUTE = "$PLAYER_SCREEN?$PLAYER_URLS={$PLAYER_URLS}"
     const val RELEASE_DREAMCAST_SCREEN_ROUTE = RELEASE_DREAM_CAST_SCREEN
+
+    fun currentReleaseRoute(rootGraph: String): String {
+        return "$rootGraph/$DETAIL_RELEASE_SCREEN?$RELEASE_ID_ARG={$RELEASE_ID_ARG}"
+    }
+
+    fun currentReleaseRoute(rootGraph: String, releaseId: String): String {
+        return "$rootGraph/$DETAIL_RELEASE_SCREEN?$RELEASE_ID_ARG=$releaseId"
+    }
+
+    fun dreamCastReleaseRoute(rootGraph: String): String {
+        return "$rootGraph/$RELEASE_DREAM_CAST_SCREEN"
+    }
+}
+
+object RootGraphs {
+    const val HOME_GRAPH = "home_graph"
+    const val SEARCH_GRAPH = "search_graph"
+    const val GLOBAL_SEARCH_GRAPH = "global_search_graph"
+    const val HISTORY_GRAPH = "history_graph"
+    const val PROFILE_GRAPH = "profile_graph"
 }
 
 class AnimeNavigation(private val navController: NavController) {
     fun navigateToRelease(releaseId: String) {
-        navController.navigate(
-            DETAIL_RELEASE_SCREEN.let {
-                "$it?$RELEASE_ID_ARG=$releaseId"
-            }
-        ) {
-            popUpTo(navController.graph.findStartDestination().id)
+        navController.navigate(AnimeDestinations.currentReleaseRoute(currentRootGraph(), releaseId)) {
             launchSingleTop = true
         }
     }
@@ -78,7 +95,7 @@ class AnimeNavigation(private val navController: NavController) {
         navController.currentBackStackEntry
             ?.savedStateHandle
             ?.set(DREAMCAST_RELEASE_EPISODE, release)
-        navController.navigate(RELEASE_DREAMCAST_SCREEN_ROUTE)
+        navController.navigate(AnimeDestinations.dreamCastReleaseRoute(currentRootGraph()))
     }
 
     fun navigateToPlayerScreen(enterEpisode: Int, release: Release, doubers: String) {
@@ -94,11 +111,7 @@ class AnimeNavigation(private val navController: NavController) {
     }
 
     fun navigateFromReleaseToRelease(releaseId: String) {
-        navController.navigate(
-            DETAIL_RELEASE_SCREEN.let {
-                "$it?$RELEASE_ID_ARG=$releaseId"
-            }
-        )
+        navigateToRelease(releaseId)
     }
 
     fun navigateFromReleaseToGenreSearch(genres: String) {
@@ -117,8 +130,8 @@ class AnimeNavigation(private val navController: NavController) {
         navController.navigate(WILL_WATCH_SCREEN_ROUTE)
     }
 
-    fun navigateToHistryWatchScreen() {
-        navController.navigate(HISTORY_SCREEN_ROUTE)
+    fun navigateToHistoryWatchScreen() {
+        navController.navigate(AnimeDestinations.PROFILE_HISTORY_SCREEN_ROUTE)
     }
 
     fun navigateToSettingsScreen() {
@@ -126,10 +139,23 @@ class AnimeNavigation(private val navController: NavController) {
     }
 
     fun navigateFromFavoriteToReleaseScreen(releaseId: String) {
-        navController.navigate(
-            DETAIL_RELEASE_SCREEN.let {
-                "$it?$RELEASE_ID_ARG=$releaseId"
-            }
-        )
+        navigateToRelease(releaseId)
+    }
+
+    private fun currentRootGraph(): String {
+        val hierarchy = navController.currentBackStackEntry
+            ?.destination
+            ?.hierarchy
+            ?.mapNotNull { it.route }
+            ?.toSet()
+            ?: return RootGraphs.HOME_GRAPH
+
+        return when {
+            RootGraphs.SEARCH_GRAPH in hierarchy -> RootGraphs.SEARCH_GRAPH
+            RootGraphs.GLOBAL_SEARCH_GRAPH in hierarchy -> RootGraphs.GLOBAL_SEARCH_GRAPH
+            RootGraphs.HISTORY_GRAPH in hierarchy -> RootGraphs.HISTORY_GRAPH
+            RootGraphs.PROFILE_GRAPH in hierarchy -> RootGraphs.PROFILE_GRAPH
+            else -> RootGraphs.HOME_GRAPH
+        }
     }
 }

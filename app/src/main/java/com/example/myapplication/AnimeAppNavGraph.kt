@@ -17,15 +17,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.session.MediaController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.AnimeDestinations.FAVORITE_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.GLOBAL_SEARCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.HISTORY_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.MAIN_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.PLAYER_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.PROFILE_HISTORY_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.PROFILE_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.SEARCH_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
+import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
 import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
@@ -56,50 +65,49 @@ import com.example.myapplication.settings.SettingsScreen
 import com.example.myapplication.settings.SettingsViewModel
 import com.example.myapplication.watch.WatchScreen
 import com.example.myapplication.watch.WatchScreenViewModel
-import kotlin.Int
 
 sealed class Root(val route: String, val label: String, val icon: Int) {
-    data object Home : Root(MAIN_SCREEN_ROUTE, "Home", R.drawable.baseline_home_24)
-    data object Search : Root(SEARCH_SCREEN_ROUTE, "Search", R.drawable.baseline_search_24)
+    data object Home : Root(RootGraphs.HOME_GRAPH, "Home", R.drawable.baseline_home_24)
+    data object Search : Root(RootGraphs.SEARCH_GRAPH, "Search", R.drawable.baseline_search_24)
     data object GlobalSearch :
-        Root("Gloval_search", "Global Search", R.drawable.baseline_global_search_explore_24)
+        Root(RootGraphs.GLOBAL_SEARCH_GRAPH, "Global Search", R.drawable.baseline_global_search_explore_24)
 
-    data object History : Root("profile", "Profile", R.drawable.baseline_history_24)
-    data object Profile : Root("profile", "Profile", R.drawable.baseline_person_24)
+    data object History : Root(RootGraphs.HISTORY_GRAPH, "History", R.drawable.baseline_history_24)
+    data object Profile : Root(RootGraphs.PROFILE_GRAPH, "Profile", R.drawable.baseline_person_24)
 }
 
 @Composable
 fun AnimeAppNavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = MAIN_SCREEN_ROUTE,
+    startDestination: String = RootGraphs.HOME_GRAPH,
     navActions: AnimeNavigation = remember(navController) {
         AnimeNavigation(navController)
-    }, viewModelFactory: ViewModelProvider.Factory,
+    },
+    viewModelFactory: ViewModelProvider.Factory,
     PipCallBack: () -> Unit,
     ConnectConntrroller: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val items = listOf(Root.Home, Root.Search, Root.GlobalSearch, Root.History, Root.Profile)
-    val currentDestination by navController.currentBackStackEntryAsState()
-    val selectedDest = currentDestination?.destination
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val selectedDest = currentBackStackEntry?.destination
+    val currentRoute = selectedDest?.route
     val noBottomBarScreens = listOf(PLAYER_SCREEN_ROUTE)
-    val currentRoute = currentDestination?.destination?.route
-    val showBottomBar = currentRoute in noBottomBarScreens
+    val showBottomBar = currentRoute !in noBottomBarScreens
+
     Scaffold(bottomBar = {
-        if (!showBottomBar) {
+        if (showBottomBar) {
             NavigationBar(modifier = Modifier.height(80.dp)) {
                 items.forEach { item ->
-                    val selected = selectedDest.isTopLevelSelected(item.route)
                     NavigationBarItem(
-                        selected = selected,
+                        selected = selectedDest.isTopLevelSelected(item.route),
                         onClick = {
                             navController.navigate(item.route) {
-                                // Сохраняем состояние предыдущих табов
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
-                                launchSingleTop = true       // не плодим дубликаты
-                                restoreState = true          // восстанавливаем стек таба
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -119,35 +127,170 @@ fun AnimeAppNavGraph(
             startDestination = startDestination,
             modifier = modifier
         ) {
-            composable(Root.Home.route) {
-                val viewModel: MainViewModel = viewModel(factory = viewModelFactory)
-                ListScreen(
-                    PaddingValues(
-                        16.dp,
-                        innerPadding.calculateTopPadding(),
-                        16.dp,
-                        innerPadding.calculateBottomPadding()
-                    ), viewModel, {
-                        navActions.navigateToRelease(it)
-                    }, {
-                        navActions.navigateToDreamCastRelease(it)
-                    })
+            navigation(
+                startDestination = MAIN_SCREEN_ROUTE,
+                route = RootGraphs.HOME_GRAPH
+            ) {
+                composable(MAIN_SCREEN_ROUTE) {
+                    val viewModel: MainViewModel = viewModel(factory = viewModelFactory)
+                    ListScreen(
+                        PaddingValues(
+                            16.dp,
+                            innerPadding.calculateTopPadding(),
+                            16.dp,
+                            innerPadding.calculateBottomPadding()
+                        ),
+                        viewModel,
+                        { navActions.navigateToRelease(it) },
+                        { navActions.navigateToDreamCastRelease(it) }
+                    )
+                }
+
+                releaseDetailsRoutes(
+                    rootGraph = RootGraphs.HOME_GRAPH,
+                    innerPadding = innerPadding,
+                    viewModelFactory = viewModelFactory,
+                    navActions = navActions,
+                    navController = navController
+                )
             }
 
-            composable(Root.Search.route) { entry ->
-                val viewModel: SearchScreenViewModel = viewModel(factory = viewModelFactory)
-                val genre = entry.arguments?.getString(GENRE_ID_ARG)
-                SearchScreen(
-                    PaddingValues(
-                        16.dp,
-                        innerPadding.calculateTopPadding(),
-                        16.dp,
-                        innerPadding.calculateBottomPadding()
-                    ),
-                    viewModel,//todo разобраться с пуустым жанром или перенести в константы
-                    navController, genre ?: "", onItemClick = {
-                        navActions.navigateToRelease(it)
+            navigation(
+                startDestination = SEARCH_SCREEN_ROUTE,
+                route = RootGraphs.SEARCH_GRAPH
+            ) {
+                composable(SEARCH_SCREEN_ROUTE) { entry ->
+                    val viewModel: SearchScreenViewModel = viewModel(factory = viewModelFactory)
+                    val genre = entry.arguments?.getString(GENRE_ID_ARG)
+                    SearchScreen(
+                        PaddingValues(
+                            16.dp,
+                            innerPadding.calculateTopPadding(),
+                            16.dp,
+                            innerPadding.calculateBottomPadding()
+                        ),
+                        viewModel,
+                        navController,
+                        genre ?: "",
+                        onItemClick = {
+                            navActions.navigateToRelease(it)
+                        }
+                    )
+                }
+
+                releaseDetailsRoutes(
+                    rootGraph = RootGraphs.SEARCH_GRAPH,
+                    innerPadding = innerPadding,
+                    viewModelFactory = viewModelFactory,
+                    navActions = navActions,
+                    navController = navController
+                )
+            }
+
+            navigation(
+                startDestination = GLOBAL_SEARCH_SCREEN_ROUTE,
+                route = RootGraphs.GLOBAL_SEARCH_GRAPH
+            ) {
+                composable(GLOBAL_SEARCH_SCREEN_ROUTE) {
+                    //todo сделать глобальный поиск по всем релизам на шикимори
+                }
+
+                releaseDetailsRoutes(
+                    rootGraph = RootGraphs.GLOBAL_SEARCH_GRAPH,
+                    innerPadding = innerPadding,
+                    viewModelFactory = viewModelFactory,
+                    navActions = navActions,
+                    navController = navController
+                )
+            }
+
+            navigation(
+                startDestination = HISTORY_SCREEN_ROUTE,
+                route = RootGraphs.HISTORY_GRAPH
+            ) {
+                composable(HISTORY_SCREEN_ROUTE) {
+                    HistoryRoute(viewModelFactory, navActions, navController)
+                }
+
+                releaseDetailsRoutes(
+                    rootGraph = RootGraphs.HISTORY_GRAPH,
+                    innerPadding = innerPadding,
+                    viewModelFactory = viewModelFactory,
+                    navActions = navActions,
+                    navController = navController
+                )
+            }
+
+            navigation(
+                startDestination = PROFILE_SCREEN_ROUTE,
+                route = RootGraphs.PROFILE_GRAPH
+            ) {
+                composable(PROFILE_SCREEN_ROUTE) {
+                    ProfileScreen(
+                        PaddingValues(
+                            0.dp,
+                            innerPadding.calculateTopPadding(),
+                            0.dp,
+                            innerPadding.calculateBottomPadding()
+                        ),
+                        onFavoriteClick = {
+                            navActions.navigateFromProfileToFavorite()
+                        },
+                        onWillWatchClick = {
+                            navActions.navigateFromProfileToWillWatch()
+                        },
+                        onHistoryClick = {
+                            navActions.navigateToHistoryWatchScreen()
+                        },
+                        onSettingsClick = {
+                            navActions.navigateToSettingsScreen()
+                        }
+                    )
+                }
+
+                composable(FAVORITE_SCREEN_ROUTE) {
+                    val viewModel: FavoriteScreenViewModel = viewModel(factory = viewModelFactory)
+                    FavoriteScreen(
+                        viewModel,
+                        {
+                            navActions.navigateFromFavoriteToReleaseScreen(it)
+                        },
+                        {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(WILL_WATCH_SCREEN_ROUTE) {
+                    val viewModel: WatchScreenViewModel = viewModel(factory = viewModelFactory)
+                    WatchScreen(
+                        viewModel,
+                        {
+                            navActions.navigateFromFavoriteToReleaseScreen(it)
+                        },
+                        {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(PROFILE_HISTORY_SCREEN_ROUTE) {
+                    HistoryRoute(viewModelFactory, navActions, navController)
+                }
+
+                composable(SETTINGS_SCREEN_ROUTE) {
+                    val viewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
+                    SettingsScreen(viewModel) {
+                        navController.popBackStack()
                     }
+                }
+
+                releaseDetailsRoutes(
+                    rootGraph = RootGraphs.PROFILE_GRAPH,
+                    innerPadding = innerPadding,
+                    viewModelFactory = viewModelFactory,
+                    navActions = navActions,
+                    navController = navController
                 )
             }
 
@@ -175,127 +318,92 @@ fun AnimeAppNavGraph(
                     }
                 }
             }
-
-            composable(Root.History.route) { entry ->
-                //todo сделать отображение истории
-            }
-
-            composable(Root.GlobalSearch.route) { entry ->
-                //todo сделать глобальный поиск по всем релизам на шикимори
-            }
-
-            composable(Root.Profile.route) { entry ->
-                ProfileScreen(
-                    PaddingValues(
-                        0.dp,
-                        innerPadding.calculateTopPadding(),
-                        0.dp,
-                        innerPadding.calculateBottomPadding()
-                    ),
-                    onFavoriteClick = {
-                        navActions.navigateFromProfileToFavorite()
-                    },
-                    onWillWatchClick = {
-                        navActions.navigateFromProfileToWillWatch()
-                    },
-                    onHistoryClick = {
-                        navActions.navigateToHistryWatchScreen()
-                    },
-                    onSettingsClick = {
-                        navActions.navigateToSettingsScreen()
-                    }
-                )
-            }
-
-            composable(AnimeDestinations.RELEASE_DREAMCAST_SCREEN_ROUTE) {
-                val release =
-                    navController.previousBackStackEntry?.savedStateHandle?.get<DreamCastReleaseElement>(
-                        DREAMCAST_RELEASE_EPISODE
-                    )
-                val viewModel: ReleaseDreamCastViewModel = viewModel(factory = viewModelFactory)
-                release?.let {
-                    ReleaseDreamCastScreen(
-                        PaddingValues(
-                            0.dp,
-                            0.dp,
-                            0.dp,
-                            innerPadding.calculateBottomPadding()
-                        ),
-                        viewModel,
-                        release,
-                        {}, { episodeNum, dreamCastRelease, dreamCastSeries ->
-                            navActions.navigateToPlayerScreen(
-                                episodeNum, mapToRelease(
-                                    dreamCastSeries,
-                                    dreamCastRelease
-                                ), DREAM_CAST
-                            )
-                        }, {
-                            navController.popBackStack()
-                        })
-                }
-            }
-
-            composable(AnimeDestinations.CURRENT_RELEASE_ROUTE) { entry ->
-                val viewModel: ReleaseScreenViewModel = viewModel(factory = viewModelFactory)
-                val taskId = entry.arguments?.getString(RELEASE_ID_ARG)
-                taskId?.let {
-                    ReleaseScreen(
-                        PaddingValues(
-                            0.dp,
-                            0.dp,//innerPadding.calculateTopPadding(),
-                            0.dp,
-                            innerPadding.calculateBottomPadding()
-                        ), viewModel, it, onReleaseClick = {
-                            navActions.navigateFromReleaseToRelease(it)
-                        }, onGenreClick = {
-                            navActions.navigateFromReleaseToGenreSearch(it)
-                        }, onEpisodeClick = { episode, release ->
-                            navActions.navigateToPlayerScreen(episode, release, ANILIBERTY)
-                        }, onBackClick = {
-                            navController.popBackStack()
-                        })
-                }
-            }
-
-            composable(AnimeDestinations.WILL_WATCH_SCREEN_ROUTE) {
-                val viewModel: WatchScreenViewModel = viewModel(factory = viewModelFactory)
-                WatchScreen(
-                    viewModel, {
-                        navActions.navigateFromFavoriteToReleaseScreen(it)
-                    },
-                    {
-                        navController.popBackStack()
-                    })
-            }
-
-            composable(AnimeDestinations.FAVORITE_SCREEN_ROUTE) {
-                val viewModel: FavoriteScreenViewModel = viewModel(factory = viewModelFactory)
-                FavoriteScreen(
-                    viewModel, {
-                        navActions.navigateFromFavoriteToReleaseScreen(it)
-                    }, {
-                        navController.popBackStack()
-                    })
-            }
-
-            composable(AnimeDestinations.SETTINGS_SCREEN_ROUTE) {
-                val viewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
-                SettingsScreen(viewModel) {
-                    navController.popBackStack()
-                }
-            }
-
-            composable(AnimeDestinations.HISTORY_SCREEN_ROUTE) {
-                val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
-                HistoryScreen(viewModel, {
-                    navActions.navigateFromFavoriteToReleaseScreen(it)
-                }, {
-                    navController.popBackStack()
-                })
-            }
         }
     }
+}
+
+private fun NavGraphBuilder.releaseDetailsRoutes(
+    rootGraph: String,
+    innerPadding: PaddingValues,
+    viewModelFactory: ViewModelProvider.Factory,
+    navActions: AnimeNavigation,
+    navController: NavHostController
+) {
+    composable(AnimeDestinations.dreamCastReleaseRoute(rootGraph)) {
+        val release =
+            navController.previousBackStackEntry?.savedStateHandle?.get<DreamCastReleaseElement>(
+                DREAMCAST_RELEASE_EPISODE
+            )
+        val viewModel: ReleaseDreamCastViewModel = viewModel(factory = viewModelFactory)
+        release?.let {
+            ReleaseDreamCastScreen(
+                PaddingValues(
+                    0.dp,
+                    0.dp,
+                    0.dp,
+                    innerPadding.calculateBottomPadding()
+                ),
+                viewModel,
+                release,
+                {},
+                { episodeNum, dreamCastRelease, dreamCastSeries ->
+                    navActions.navigateToPlayerScreen(
+                        episodeNum,
+                        mapToRelease(dreamCastSeries, dreamCastRelease),
+                        DREAM_CAST
+                    )
+                },
+                { navController.popBackStack() }
+            )
+        }
+    }
+
+    composable(AnimeDestinations.currentReleaseRoute(rootGraph)) { entry ->
+        val viewModel: ReleaseScreenViewModel = viewModel(factory = viewModelFactory)
+        val taskId = entry.arguments?.getString(RELEASE_ID_ARG)
+        taskId?.let {
+            ReleaseScreen(
+                PaddingValues(
+                    0.dp,
+                    0.dp,
+                    0.dp,
+                    innerPadding.calculateBottomPadding()
+                ),
+                viewModel,
+                it,
+                onReleaseClick = { releaseId ->
+                    navActions.navigateFromReleaseToRelease(releaseId)
+                },
+                onGenreClick = { genreId ->
+                    navActions.navigateFromReleaseToGenreSearch(genreId)
+                },
+                onEpisodeClick = { episode, release ->
+                    navActions.navigateToPlayerScreen(episode, release, ANILIBERTY)
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryRoute(
+    viewModelFactory: ViewModelProvider.Factory,
+    navActions: AnimeNavigation,
+    navController: NavHostController
+) {
+    val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
+    HistoryScreen(
+        viewModel,
+        {
+            navActions.navigateFromFavoriteToReleaseScreen(it)
+        },
+        {
+            navController.popBackStack()
+        }
+    )
 }
 
 fun NavDestination?.isTopLevelSelected(route: String): Boolean {
