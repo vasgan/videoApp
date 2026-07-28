@@ -70,7 +70,11 @@ sealed class Root(val route: String, val label: String, val icon: Int) {
     data object Home : Root(RootGraphs.HOME_GRAPH, "Home", R.drawable.baseline_home_24)
     data object Search : Root(RootGraphs.SEARCH_GRAPH, "Search", R.drawable.baseline_search_24)
     data object GlobalSearch :
-        Root(RootGraphs.GLOBAL_SEARCH_GRAPH, "Global Search", R.drawable.baseline_global_search_explore_24)
+        Root(
+            RootGraphs.GLOBAL_SEARCH_GRAPH,
+            "Global Search",
+            R.drawable.baseline_global_search_explore_24
+        )
 
     data object History : Root(RootGraphs.HISTORY_GRAPH, "History", R.drawable.baseline_history_24)
     data object Profile : Root(RootGraphs.PROFILE_GRAPH, "Profile", R.drawable.baseline_person_24)
@@ -209,7 +213,7 @@ fun AnimeAppNavGraph(
                 route = RootGraphs.HISTORY_GRAPH
             ) {
                 composable(HISTORY_SCREEN_ROUTE) {
-                    HistoryRoute(viewModelFactory, navActions, navController)
+                    HistoryRoute(viewModelFactory, navActions, navController, false)
                 }
 
                 releaseDetailsRoutes(
@@ -275,7 +279,7 @@ fun AnimeAppNavGraph(
                 }
 
                 composable(PROFILE_HISTORY_SCREEN_ROUTE) {
-                    HistoryRoute(viewModelFactory, navActions, navController)
+                    HistoryRoute(viewModelFactory, navActions, navController, true)
                 }
 
                 composable(SETTINGS_SCREEN_ROUTE) {
@@ -392,7 +396,8 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
 private fun HistoryRoute(
     viewModelFactory: ViewModelProvider.Factory,
     navActions: AnimeNavigation,
-    navController: NavHostController
+    navController: NavHostController,
+    showBackButton: Boolean
 ) {
     val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
     HistoryScreen(
@@ -402,7 +407,8 @@ private fun HistoryRoute(
         },
         {
             navController.popBackStack()
-        }
+        },
+        showBackButton
     )
 }
 

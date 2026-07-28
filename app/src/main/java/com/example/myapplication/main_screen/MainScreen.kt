@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.ui.LoadingSpinner
 import com.example.myapplication.ui.ReleaseElementView
 import com.example.myapplication.ui.ReleaseElementViewDreamCast
 import kotlinx.coroutines.launch
@@ -206,19 +207,3 @@ fun ShowHistory(history: History, onContinueWatchingClick: () -> Unit) {
         }
     }
 }
-
-@Composable
-fun LoadingSpinner() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(40.dp),
-            strokeWidth = 4.dp
-        )
-    }
-}
-

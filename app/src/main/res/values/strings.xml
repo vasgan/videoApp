@@ -24,4 +24,8 @@
     <string name="your_stop">Вы смотрели: %1$s</string>
     <string name="continue_watching">Продолжить просмотр</string>
     <string name="loading_error">Ошибка загрузки</string>
+    <string name="empty_favorite">Пока в этом списке пусто :( \n Добавляйте любимые тайтлы в избранное что бы всегда иметь к ним доступ</string>
+    <string name="empty_watch_letter">Пока в этом списке пусто :( \n Добавляйте сюда тайтлы которые хотите посмотреть</string>
+    <string name="empty_history">Пока в этом списке пусто :( \n Смотрите больше тайтлов и они появиться здесь</string>
+
 </resources>

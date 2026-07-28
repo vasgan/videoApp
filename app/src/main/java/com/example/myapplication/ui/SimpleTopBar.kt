@@ -12,13 +12,25 @@ import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimpleTopBar(idString: Int, onBackButtonClick: () -> Unit) {
-    TopAppBar(
-        title = { Text(LocalContext.current.getString(idString)) },
-        navigationIcon = {
-            IconButton(onClick = { onBackButtonClick() }) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад")
+fun SimpleTopBar(idString: Int,
+                 showBackButton: Boolean = true,
+                 onBackButtonClick: () -> Unit) {
+    if (showBackButton)
+        TopAppBar(
+            title = { Text(LocalContext.current.getString(idString)) },
+            navigationIcon = {
+                IconButton(onClick = { onBackButtonClick() }) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Назад")
+                }
             }
-        }
-    )
+        )
+    else
+        TopAppBar(
+            title = { Text(LocalContext.current.getString(idString)) },
+        /*    navigationIcon = {
+                IconButton(onClick = { onBackButtonClick() }) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Назад")
+                }
+            }*/
+        )
 }
