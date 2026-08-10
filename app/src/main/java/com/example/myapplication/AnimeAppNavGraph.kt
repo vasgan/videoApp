@@ -415,8 +415,12 @@ private fun HistoryRoute(
     val viewModel: HistoryViewModel = viewModel(factory = viewModelFactory)
     HistoryScreen(
         viewModel,
-        {
-            navActions.navigateFromFavoriteToReleaseScreen(it)
+        { id, doubbers, url ->
+            if (doubbers == ANILIBERTY)
+                navActions.navigateFromFavoriteToReleaseScreen(id)
+            else if (doubbers == DREAM_CAST) {
+                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+            }
         },
         {
             navController.popBackStack()

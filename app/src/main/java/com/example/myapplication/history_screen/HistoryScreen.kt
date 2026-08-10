@@ -1,5 +1,6 @@
 package com.example.myapplication.history_screen
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,7 +33,7 @@ import com.example.myapplication.ui.SimpleTopBar
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel,
-    onItemClick: (String) -> Unit,
+    onItemClick: (String, String, String?) -> Unit,
     onBackClick: () -> Unit,
     showBackButton: Boolean
 ) {
@@ -68,8 +69,13 @@ fun HistoryScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            onItemClick(history[i].releaseId.toString())
+                                            onItemClick(
+                                                history[i].releaseId.toString(),
+                                                history[i].doubers,
+                                                history[i].url
+                                            )
                                         }) {
+                                    Log.e("olololololo", history[i].toString())
                                     ShimmerImage(
                                         if (history[i].doubers == ANILIBERTY)
                                             "https://aniliberty.top/" + history[i].imageUrl else "https:" + history[i].imageUrl,
@@ -80,6 +86,7 @@ fun HistoryScreen(
                                             .fillMaxSize(),
                                         ContentScale.FillWidth, 8
                                     )
+                                    Log.e("olololololol", history[i].doubers)
                                     Column {
                                         Text(
                                             text = history[i].releaseName,

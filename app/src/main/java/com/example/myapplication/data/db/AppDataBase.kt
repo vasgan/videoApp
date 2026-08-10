@@ -11,7 +11,7 @@ import com.example.myapplication.data.db.video.VideoDao
 import com.example.myapplication.data.db.watch_list.WatchListDao
 import com.example.myapplication.data.db.watch_list.WatchListItem
 
-@Database(entities = [Video::class, Favorite::class, WatchListItem::class, History::class], version = 4, exportSchema = false)
+@Database(entities = [Video::class, Favorite::class, WatchListItem::class, History::class], version = 5, exportSchema = false)
 abstract class AppDataBase: RoomDatabase() {
     abstract fun videoDao(): VideoDao
     abstract fun favoriteDao(): FavoriteDao

@@ -66,6 +66,7 @@ fun mapToRelease(dreamCastSeries: DreamCastDescriptionAndSeries, dreamCastReleas
         dreamCastRelease.type + "",
         dreamCastRelease.duration + "",
         episode,
-        DREAM_CAST
+        DREAM_CAST,
+        dreamCastRelease.url
     )
 }

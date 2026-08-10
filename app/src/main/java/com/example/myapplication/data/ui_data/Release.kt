@@ -15,5 +15,6 @@ data class Release(
     val type: String,
     val durationByEpisode: String,
     val episodes: List<Episode>,
-    val doubbers: String
+    val doubbers: String,
+    val url: String? = null
 ) : Parcelable

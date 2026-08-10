@@ -16,6 +16,7 @@ data class History(
     val timeEnd: Long,
     val dateUpdate: Long,
     val imageUrl: String,
+    val url: String? = null,
 )
 {
     companion object {

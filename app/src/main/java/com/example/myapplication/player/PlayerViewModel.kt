@@ -1,5 +1,6 @@
 package com.example.myapplication.player
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -70,8 +71,8 @@ class PlayerViewModel @Inject constructor(
 
     private var doubersVm = ""
 
+    @SuppressLint("SuspiciousIndentation")
     fun initViewModel(episode: Int, release: Release, doubers: String) {
-        if (_uiStateEpisode.value >= 0)
         doubersVm = doubers
         _uiStateEpisode.value = episode
         _uiStateRelease.value = release
@@ -192,7 +193,8 @@ class PlayerViewModel @Inject constructor(
                     episodeNum,
                     position,
                     System.currentTimeMillis(),
-                    release?.poster.toString()
+                    release?.poster.toString(),
+                    release?.url
                     )
                 )
             historiesRelease = release?.id?.toInt()?.let { historyRepository.getHistoryRelease(it) }
@@ -226,7 +228,7 @@ class PlayerViewModel @Inject constructor(
             val imageUrl = _uiStateRelease.value?.poster
             if (id != null && name != null && imageUrl != null)
                 if (!_uiStateFavorite.value) {
-                    favoriteRepository.addFavorite(id, name, imageUrl, doubersVm)
+                    favoriteRepository.addFavorite(id, name, imageUrl, doubersVm, _uiStateRelease.value?.url)
                     _uiStateFavorite.value = true
                 } else {
                     favoriteRepository.removeFavorite(id)
