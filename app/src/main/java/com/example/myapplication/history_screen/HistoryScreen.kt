@@ -75,7 +75,6 @@ fun HistoryScreen(
                                                 history[i].url
                                             )
                                         }) {
-                                    Log.e("olololololo", history[i].toString())
                                     ShimmerImage(
                                         if (history[i].doubers == ANILIBERTY)
                                             "https://aniliberty.top/" + history[i].imageUrl else "https:" + history[i].imageUrl,
@@ -86,7 +85,6 @@ fun HistoryScreen(
                                             .fillMaxSize(),
                                         ContentScale.FillWidth, 8
                                     )
-                                    Log.e("olololololol", history[i].doubers)
                                     Column {
                                         Text(
                                             text = history[i].releaseName,

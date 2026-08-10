@@ -14,11 +14,11 @@ interface WatchListDao {
     @Upsert
     suspend fun upsert(favorite: WatchListItem)
 
-    @Query("DELETE FROM watchList WHERE id = :id")
-    suspend fun deleteById(id: Int): Int
+    @Query("DELETE FROM watchList WHERE id = :id AND doubers = :doubers")
+    suspend fun deleteById(id: Int, doubers: String): Int
 
-    @Query("SELECT * FROM watchList WHERE id = :id")
-    suspend fun getWatchListItem(id: Int): WatchListItem?
+    @Query("SELECT * FROM watchList WHERE id = :id AND doubers = :doubers")
+    suspend fun getWatchListItem(id: Int, doubers: String): WatchListItem?
 
     @Query("SELECT * FROM watchList")
     suspend fun getWatchListItems(): List<WatchListItem>

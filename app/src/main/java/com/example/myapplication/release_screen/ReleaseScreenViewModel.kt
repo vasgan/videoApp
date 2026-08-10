@@ -109,6 +109,10 @@ class ReleaseScreenViewModel @Inject constructor(
         favoriteRepository.getFavorite(id.toInt()).onEach {
             _uiStateFavorite.value = (it.id > 0)
         }.launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            _uiStateWatchList.value = watchListRepository.getWatchItem(id.toInt(), doubbers) != null
+        }
     }
 
     private fun getHistory(id: Int) {
@@ -210,12 +214,14 @@ class ReleaseScreenViewModel @Inject constructor(
             val id = _uiStateRelease.value?.release?.id?.toInt()
             val name = _uiStateRelease.value?.release?.name
             val poster = _uiStateRelease.value?.release?.poster
-            if (id != null && name != null && poster != null)
+            val doubers = _uiStateRelease.value?.release?.doubbers
+            val url = _uiStateRelease.value?.release?.url
+            if (id != null && name != null && poster != null && doubers != null)
                 if (!_uiStateWatchList.value) {
-                    watchListRepository.addToWatchList(id, name, poster)
+                    watchListRepository.addToWatchList(id, name, poster, doubers, url)
                     _uiStateWatchList.value = true
                 } else {
-                    watchListRepository.removeFromWatchList(id)
+                    watchListRepository.removeFromWatchList(id, doubers)
                     _uiStateWatchList.value = false
                 }
         }

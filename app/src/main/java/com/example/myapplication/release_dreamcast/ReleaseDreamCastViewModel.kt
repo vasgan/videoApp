@@ -10,6 +10,7 @@ import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
 import com.example.myapplication.repository.favorite.FavoriteRepository
 import com.example.myapplication.repository.history.HistoryRepository
+import com.example.myapplication.repository.watch_list.WatchListRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,7 @@ class ReleaseDreamCastViewModel @Inject constructor(
     val repository: DreamCastRepository,
     private val watchHistoryRepository: HistoryRepository,
     private val favoriteRepository: FavoriteRepository,
+    private val watchListRepository: WatchListRepository,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<DreamCastDescriptionAndSeries?> = MutableStateFlow(null)
@@ -33,6 +35,9 @@ class ReleaseDreamCastViewModel @Inject constructor(
     //Избранное
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val favoriteUiState: StateFlow<Boolean> = _uiStateFavorite.asStateFlow()
+
+    private val _uiStateWatchList: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val watchListUiState: StateFlow<Boolean> = _uiStateWatchList.asStateFlow()
 
     //Информация о релизе
     private val _uiStateRelease: MutableStateFlow<DreamCastReleaseElement?> = MutableStateFlow(null)
@@ -48,6 +53,12 @@ class ReleaseDreamCastViewModel @Inject constructor(
         favoriteRepository.getFavorite(id).onEach {
             _uiStateFavorite.value = (it.id > 0)
         }.launchIn(viewModelScope)
+    }
+
+    fun initWatchList(id: Int) {
+        viewModelScope.launch {
+            _uiStateWatchList.value = watchListRepository.getWatchItem(id, DREAM_CAST) != null
+        }
     }
 
     fun getSeriesList(url: String) {
@@ -81,6 +92,27 @@ class ReleaseDreamCastViewModel @Inject constructor(
             } else {
                 dreamCastRelease?.id?.let { favoriteRepository.removeFavorite(it.toInt()) }
                 _uiStateFavorite.value = false
+            }
+        }
+    }
+
+    fun changeWatchList(dreamCastRelease: DreamCastReleaseElement?) {
+        viewModelScope.launch {
+            val id = dreamCastRelease?.id?.toInt()
+            if (id != null) {
+                if (!_uiStateWatchList.value) {
+                    watchListRepository.addToWatchList(
+                        id,
+                        dreamCastRelease.russian,
+                        dreamCastRelease.image,
+                        DREAM_CAST,
+                        dreamCastRelease.url
+                    )
+                    _uiStateWatchList.value = true
+                } else {
+                    watchListRepository.removeFromWatchList(id, DREAM_CAST)
+                    _uiStateWatchList.value = false
+                }
             }
         }
     }

@@ -72,11 +72,13 @@ fun ReleaseDreamCastScreen(
         dreamCastRelease = viewModel.uiStateRelease.collectAsStateWithLifecycle().value
         viewModel.getHistory(id.toInt())
         viewModel.initFavorite(id.toInt())
+        viewModel.initWatchList(id.toInt())
         viewModel.getSeriesList("https://dreamerscast.com$url")
     } else {
         if (dreamCastReleaseFromData != null) {
             viewModel.getHistory(dreamCastReleaseFromData.id.toInt())
             viewModel.initFavorite(dreamCastReleaseFromData.id.toInt())
+            viewModel.initWatchList(dreamCastReleaseFromData.id.toInt())
             viewModel.getSeriesList("https://dreamerscast.com" + dreamCastReleaseFromData.url)
         }
     }
@@ -84,6 +86,7 @@ fun ReleaseDreamCastScreen(
     val model by viewModel.uiState.collectAsStateWithLifecycle()
     val history by viewModel.uiStateHistory.collectAsStateWithLifecycle()
     val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
+    val watchList by viewModel.watchListUiState.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier
@@ -153,9 +156,10 @@ fun ReleaseDreamCastScreen(
                         .size(48.dp)
                         .padding(PaddingValues(8.dp, 16.dp, 8.dp, 0.dp))
                         .clickable {
-                            //todo watch letter
+                            viewModel.changeWatchList(dreamCastRelease)
                         },
-                    painter = painterResource(id = R.drawable.add_to_queue_24dp),
+                    painter = if (watchList) painterResource(id = R.drawable.add_to_queue_24dp_select)
+                    else painterResource(id = R.drawable.add_to_queue_24dp),
                     contentDescription = "",
                     contentScale = ContentScale.Crop
                 )

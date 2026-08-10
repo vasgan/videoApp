@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -276,8 +275,12 @@ fun AnimeAppNavGraph(
                     val viewModel: WatchScreenViewModel = viewModel(factory = viewModelFactory)
                     WatchScreen(
                         viewModel,
-                        {
-                            navActions.navigateFromFavoriteToReleaseScreen(it)
+                        { id, doubbers, url ->
+                            if (doubbers == ANILIBERTY)
+                                navActions.navigateFromFavoriteToReleaseScreen(id)
+                            else if (doubbers == DREAM_CAST) {
+                                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                            }
                         },
                         {
                             navController.popBackStack()
