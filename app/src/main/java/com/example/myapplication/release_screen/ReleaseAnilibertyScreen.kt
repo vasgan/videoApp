@@ -82,9 +82,9 @@ fun ReleaseAnilibertyScreen(
         activity?.setFullscreen(false)
         viewModel.getCurrentRelease(id, doubbers)
     }
-    when (model) {
+    when (val currentModel = model) {
         is UiReleaseAniliberty.CompleteUiReleaseAniliberty ->
-            model!!.release?.let { release ->
+            currentModel.release?.let { release ->
                 franchise?.let { franchiseState ->
                     ShowRelease(
                         context, innerPadding, history, watchList, viewModel, release,

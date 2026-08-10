@@ -190,7 +190,9 @@ fun CustomSlider(
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false)
             draggingValue = pxToValue(down.position.x)
-            onPreviewChange(draggingValue!!)
+            draggingValue?.let {
+                onPreviewChange(it)
+            }
 
             horizontalDrag(down.id) { change ->
                 change.consume()

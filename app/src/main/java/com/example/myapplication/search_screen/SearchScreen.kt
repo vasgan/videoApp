@@ -59,10 +59,10 @@ fun SearchScreen(
                     .fillMaxWidth()
             )
         }
-        when (items) {
+        when (val currentItems = items) {
             is UISearchAl.CompleteUISearchAl -> {
-                items!!.releases?.let { releses ->
-                    if (releses.size == 0) {
+                currentItems.releases?.let { releses ->
+                    if (releses.isEmpty()) {
                         item {
                             Text(
                                 modifier = Modifier

@@ -33,7 +33,7 @@ class VideoRepositoryImpl @Inject constructor(
             val result = api.getReleases(page)
             if (result.isSuccessful) {
                 result.body()?.let {
-                    emit(Success(result.body()!!.data))
+                    emit(Success(it.data))
                 }
             } else {
                 emit(Error(result.message() ?: "Unknown error"))

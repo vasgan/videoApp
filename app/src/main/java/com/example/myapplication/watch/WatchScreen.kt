@@ -39,12 +39,13 @@ fun WatchScreen(
         topBar = {
             SimpleTopBar(R.string.views_plans) { onBackClick() }
         }, content = { innerPaddingValues ->
+            val currentWatchListItems = watchListItems
             when {
-                watchListItems == null -> {
+                currentWatchListItems == null -> {
                     CenterScreenProgressIndicator()
                 }
 
-                watchListItems!!.isEmpty() -> {
+                currentWatchListItems.isEmpty() -> {
                     EmptyState(
                         title = stringResource(R.string.empty_watch_letter),
                         modifier = Modifier
@@ -60,41 +61,43 @@ fun WatchScreen(
                             .padding(innerPaddingValues)
                             .fillMaxSize()
                     ) {
-                        watchListItems?.let { watch ->
-                            items(watch.size) { i ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            onItemClick(
-                                                watch[i].id,
-                                                watch[i].doubers,
-                                                watch[i].url
-                                            )
-                                        }) {
-                                    ShimmerImage(
-                                        ReleaseSource.posterUrl(watch[i].doubers, watch[i].imageUrl),
-                                        Modifier
-                                            .width(120.dp)
-                                            .wrapContentHeight()
-                                            .padding(start = 16.dp, top = 8.dp, bottom = 16.dp)
-                                            .fillMaxSize(),
-                                        ContentScale.FillWidth, 8
-                                    )
-                                    Text(
-                                        text = watch[i].name,
-                                        modifier = Modifier
-                                            .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
-                                        style = TextStyle(
-                                            fontSize = 16.sp,
-                                            lineHeight = 16.sp
+                        items(currentWatchListItems.size) { i ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onItemClick(
+                                            currentWatchListItems[i].id,
+                                            currentWatchListItems[i].doubers,
+                                            currentWatchListItems[i].url
                                         )
+                                    }) {
+                                ShimmerImage(
+                                    ReleaseSource.posterUrl(
+                                        currentWatchListItems[i].doubers,
+                                        currentWatchListItems[i].imageUrl
+                                    ),
+                                    Modifier
+                                        .width(120.dp)
+                                        .wrapContentHeight()
+                                        .padding(start = 16.dp, top = 8.dp, bottom = 16.dp)
+                                        .fillMaxSize(),
+                                    ContentScale.FillWidth, 8
+                                )
+                                Text(
+                                    text = currentWatchListItems[i].name,
+                                    modifier = Modifier
+                                        .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+                                    style = TextStyle(
+                                        fontSize = 16.sp,
+                                        lineHeight = 16.sp
                                     )
-                                }
+                                )
                             }
                         }
                     }
                 }
             }
-        })
+        }
+    )
 }

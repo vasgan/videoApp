@@ -59,6 +59,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @SuppressLint("ResourceAsColor")
 @Composable
@@ -107,8 +108,10 @@ fun PlayerScreen(
         if (control == null || uiStateHistory == null) return@LaunchedEffect
         if (started) return@LaunchedEffect
         started = true
-        viewModel.getCurrentEpisodeParam().let {
-            control?.setMediaItem(MediaItem.fromUri(it.url), uiStateHistory!!)
+        viewModel.getCurrentEpisodeParam().let { it ->
+            uiStateHistory?.let { history ->
+                control?.setMediaItem(MediaItem.fromUri(it.url), history)
+            }
         }
         control?.prepare()
         control?.playWhenReady = true
@@ -119,7 +122,7 @@ fun PlayerScreen(
             while (isActive) {
                 control?.let { viewModel.changePosition(it.currentPosition) }
                 control?.let { duration = it.duration }
-                delay(500)
+                delay(500.milliseconds)
             }
         }
         fun changeEpisode(episodeNum: Int) {
@@ -152,7 +155,8 @@ fun PlayerScreen(
         )
 
         DisposableEffect(control) {
-            control!!.addListener(object : Player.Listener {
+            val currentControl = control
+            currentControl?.addListener(object : Player.Listener {
                 private var wasSeek = false
                 override fun onPositionDiscontinuity(
                     oldPosition: Player.PositionInfo,
@@ -161,7 +165,7 @@ fun PlayerScreen(
                 ) {
                     if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                         wasSeek = true
-                        viewModel.updateHistory(control!!.currentPosition)
+                        viewModel.updateHistory(currentControl.currentPosition)
                     }
                 }
 
@@ -170,17 +174,19 @@ fun PlayerScreen(
                         wasSeek = false
                         viewModel.draggingEnd()
                     }
-                    viewModel.updateHistory(control!!.currentPosition)
+                    viewModel.updateHistory(currentControl.currentPosition)
                 }
             })
             val window = (context as Activity).window
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             onDispose {
-                viewModel.updateHistory(control!!.currentPosition)
-                control?.run {
-                    pause()
-                    stop()
-                    clearMediaItems()
+                currentControl?.let {
+                    viewModel.updateHistory(it.currentPosition)
+                    currentControl.run {
+                        pause()
+                        stop()
+                        clearMediaItems()
+                    }
                 }
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 activity?.setFullscreen(false)
@@ -198,7 +204,7 @@ fun PlayerScreen(
                                 jobMoving = scope.launch {
                                     viewModel.showForward()
                                     secondsSeek += 10
-                                    delay(500)
+                                    delay(500.milliseconds)
                                     viewModel.onSeekForward()
                                     viewModel.endShowSupportView()
                                 }

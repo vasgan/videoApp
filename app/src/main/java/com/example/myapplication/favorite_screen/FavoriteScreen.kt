@@ -46,7 +46,7 @@ fun FavoriteScreen(
                     CenterScreenProgressIndicator()
                 }
 
-                favorite!!.isEmpty() -> {
+                favorite.isNullOrEmpty() -> {
                     EmptyState(
                         title = stringResource(R.string.empty_favorite),
                         modifier = Modifier
@@ -62,13 +62,13 @@ fun FavoriteScreen(
                             .padding(innerPaddingValues)
                             .fillMaxSize()
                     ) {
-                        favorite?.let {
-                            items(it.size) { i ->
+                        favorite?.let { favorites ->
+                            items(favorites.size) { i ->
                                 Row {
                                     ShimmerImage(
                                         ReleaseSource.posterUrl(
-                                            favorite!![i].doubers,
-                                            favorite!![i].imageUrl
+                                            favorites[i].doubers,
+                                            favorites[i].imageUrl
                                         ),
                                         Modifier
                                             .width(120.dp)
@@ -79,13 +79,13 @@ fun FavoriteScreen(
                                     )
 
                                     Text(
-                                        text = favorite!![i].name,
+                                        text = favorites[i].name,
                                         modifier = Modifier
                                             .clickable {
                                                 onItemClick(
-                                                    favorite!![i].id.toString(),
-                                                    favorite!![i].doubers,
-                                                    favorite!![i].url
+                                                    favorites[i].id.toString(),
+                                                    favorites[i].doubers,
+                                                    favorites[i].url
                                                 )
                                             }
                                             .padding(PaddingValues(0.dp, 16.dp, 16.dp, 16.dp)),

@@ -47,7 +47,7 @@ fun HistoryScreen(
                     CenterScreenProgressIndicator()
                 }
 
-                history!!.isEmpty() -> {
+                history.isNullOrEmpty() -> {
                     EmptyState(
                         title = stringResource(R.string.empty_history),
                         modifier = Modifier

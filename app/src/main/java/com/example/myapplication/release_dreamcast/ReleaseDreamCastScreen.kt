@@ -120,18 +120,26 @@ fun ReleaseDreamCastScreen(
                     )
                     .fillMaxWidth(), onClick = {
                     model?.let {
-                        if (history == null)
+                        val currentHistory = history
+                        if (currentHistory == null)
                             dreamCastRelease?.let { p2 -> onEpisodeClick(0, p2, it) }
                         else
-                            dreamCastRelease?.let { p2 -> onEpisodeClick(history!!.episodeNumber, p2, it) }
+                            dreamCastRelease?.let { p2 ->
+                                onEpisodeClick(
+                                    currentHistory.episodeNumber,
+                                    p2,
+                                    it
+                                )
+                            }
                     }
                 }) {
-                if (history == null)
+                val currentHistory = history
+                if (currentHistory == null)
                     Text(LocalContext.current.getString(R.string.start_watching))
                 else Text(
                     LocalContext.current.getString(
                         R.string.continue_watching_from_series,
-                        (history!!.episodeNumber + 1).toString()
+                        (currentHistory.episodeNumber + 1).toString()
                     )
                 )
             }
@@ -227,13 +235,14 @@ fun ReleaseDreamCastScreen(
                 )
         }
 
-        model?.series?.size?.let { it1 ->
-            items(it1) { i ->
-                EpisodeItem((i + 1).toString(), {
-                    dreamCastRelease?.let { onEpisodeClick(i, it, model!!) }
-                })
+        model?.let { model ->
+            model.series.size.let { it1 ->
+                items(it1) { i ->
+                    EpisodeItem((i + 1).toString(), {
+                        dreamCastRelease?.let { onEpisodeClick(i, it, model) }
+                    })
+                }
             }
-
         }
     }
 
@@ -304,6 +313,7 @@ fun EpisodeItem(
         )
     }
 }
+
 fun htmlToAnnotatedString(html: String): AnnotatedString {
     val spanned = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
     return AnnotatedString(spanned.toString())
