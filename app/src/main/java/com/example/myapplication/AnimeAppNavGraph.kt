@@ -43,8 +43,7 @@ import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_ID_ARG
-import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
-import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.data.parse.dreamcast.mapToRelease
 import com.example.myapplication.data.ui_data.Release
@@ -259,10 +258,10 @@ fun AnimeAppNavGraph(
                     FavoriteScreen(
                         viewModel,
                         onItemClick = { id, doubbers, url ->
-                            if (doubbers == ANILIBERTY)
-                                navActions.navigateFromFavoriteToReleaseScreen(id)
-                            else if (doubbers == DREAM_CAST) {
-                                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                            when (ReleaseSource.fromValue(doubbers)) {
+                                ReleaseSource.Aniliberty -> navActions.navigateFromFavoriteToReleaseScreen(id)
+                                ReleaseSource.DreamCast -> navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                                null -> Unit
                             }
                         },
                         {
@@ -276,10 +275,10 @@ fun AnimeAppNavGraph(
                     WatchScreen(
                         viewModel,
                         { id, doubbers, url ->
-                            if (doubbers == ANILIBERTY)
-                                navActions.navigateFromFavoriteToReleaseScreen(id)
-                            else if (doubbers == DREAM_CAST) {
-                                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                            when (ReleaseSource.fromValue(doubbers)) {
+                                ReleaseSource.Aniliberty -> navActions.navigateFromFavoriteToReleaseScreen(id)
+                                ReleaseSource.DreamCast -> navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                                null -> Unit
                             }
                         },
                         {
@@ -370,7 +369,7 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
                 navActions.navigateToPlayerScreen(
                     episodeNum,
                     mapToRelease(dreamCastSeries, dreamCastRelease),
-                    DREAM_CAST
+                    ReleaseSource.DreamCast.value
                 )
             },
             { navController.popBackStack() }
@@ -390,7 +389,7 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
                 ),
                 viewModel,
                 it,
-                ANILIBERTY,
+                ReleaseSource.Aniliberty.value,
                 onReleaseClick = { releaseId ->
                     navActions.navigateFromReleaseToRelease(releaseId)
                 },
@@ -398,7 +397,7 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
                     navActions.navigateFromReleaseToGenreSearch(genreId)
                 },
                 onEpisodeClick = { episode, release ->
-                    navActions.navigateToPlayerScreen(episode, release, ANILIBERTY)
+                    navActions.navigateToPlayerScreen(episode, release, ReleaseSource.Aniliberty.value)
                 },
                 onBackClick = {
                     navController.popBackStack()
@@ -419,10 +418,10 @@ private fun HistoryRoute(
     HistoryScreen(
         viewModel,
         { id, doubbers, url ->
-            if (doubbers == ANILIBERTY)
-                navActions.navigateFromFavoriteToReleaseScreen(id)
-            else if (doubbers == DREAM_CAST) {
-                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+            when (ReleaseSource.fromValue(doubbers)) {
+                ReleaseSource.Aniliberty -> navActions.navigateFromFavoriteToReleaseScreen(id)
+                ReleaseSource.DreamCast -> navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                null -> Unit
             }
         },
         {

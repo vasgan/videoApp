@@ -1,9 +1,8 @@
 package com.example.myapplication.data.parse.dreamcast
 
 import android.os.Parcelable
-import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.data.ui_data.Episode
-import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.data.ui_data.SkipTime
 import kotlinx.parcelize.Parcelize
@@ -66,7 +65,7 @@ fun mapToRelease(dreamCastSeries: DreamCastDescriptionAndSeries, dreamCastReleas
         dreamCastRelease.type + "",
         dreamCastRelease.duration + "",
         episode,
-        DREAM_CAST,
+        ReleaseSource.DreamCast.value,
         dreamCastRelease.url
     )
 }

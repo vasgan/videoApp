@@ -1,13 +1,8 @@
 package com.example.myapplication.repository.history
 
-import android.util.Log
-import com.example.myapplication.data.db.favorite.Favorite
-import com.example.myapplication.data.db.favorite.FavoriteDao
 import com.example.myapplication.data.db.history.History
-import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
-import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.data.db.history.HistoryDao
-import com.example.myapplication.repository.favorite.FavoriteRepository
 
 class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
 
@@ -25,7 +20,8 @@ class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
     }
 
     override suspend fun getLastALRelease(): History? {
-        val sortedList = historyDb.getHistories()?.filter { it.doubers == ANILIBERTY }
+        val sortedList = historyDb.getHistories()
+            ?.filter { ReleaseSource.fromValue(it.doubers) == ReleaseSource.Aniliberty }
         sortedList?.size?.let {
             if (it > 0)
                 return sortedList[0]
@@ -34,7 +30,8 @@ class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
     }
 
     override suspend fun getLastDCRelease(): History? {
-        val sortedList = historyDb.getHistories()?.filter { it.doubers == DREAM_CAST }
+        val sortedList = historyDb.getHistories()
+            ?.filter { ReleaseSource.fromValue(it.doubers) == ReleaseSource.DreamCast }
         sortedList?.size?.let {
             if (it > 0)
                 return sortedList[0]

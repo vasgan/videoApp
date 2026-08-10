@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
-import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.ui.CenterScreenProgressIndicator
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.ShimmerImage
@@ -76,8 +76,7 @@ fun HistoryScreen(
                                             )
                                         }) {
                                     ShimmerImage(
-                                        if (history[i].doubers == ANILIBERTY)
-                                            "https://aniliberty.top/" + history[i].imageUrl else "https:" + history[i].imageUrl,
+                                        ReleaseSource.posterUrl(history[i].doubers, history[i].imageUrl),
                                         Modifier
                                             .width(120.dp)
                                             .wrapContentHeight()

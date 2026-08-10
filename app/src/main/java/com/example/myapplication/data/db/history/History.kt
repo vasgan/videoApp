@@ -18,9 +18,3 @@ data class History(
     val imageUrl: String,
     val url: String? = null,
 )
-{
-    companion object {
-        const val ANILIBERTY = "aniliberty"
-        const val DREAM_CAST = "dream_cast"
-    }
-}

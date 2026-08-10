@@ -1,6 +1,5 @@
 package com.example.myapplication.watch
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
-import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.ui.CenterScreenProgressIndicator
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.ShimmerImage
@@ -74,8 +73,7 @@ fun WatchScreen(
                                             )
                                         }) {
                                     ShimmerImage(
-                                        if (watch[i].doubers == ANILIBERTY)
-                                            "https://aniliberty.top/" + watch[i].imageUrl else "https:" + watchListItems!![i].imageUrl,
+                                        ReleaseSource.posterUrl(watch[i].doubers, watch[i].imageUrl),
                                         Modifier
                                             .width(120.dp)
                                             .wrapContentHeight()

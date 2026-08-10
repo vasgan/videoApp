@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
-import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
@@ -57,7 +57,7 @@ class ReleaseDreamCastViewModel @Inject constructor(
 
     fun initWatchList(id: Int) {
         viewModelScope.launch {
-            _uiStateWatchList.value = watchListRepository.getWatchItem(id, DREAM_CAST) != null
+            _uiStateWatchList.value = watchListRepository.getWatchItem(id, ReleaseSource.DreamCast.value) != null
         }
     }
 
@@ -85,7 +85,7 @@ class ReleaseDreamCastViewModel @Inject constructor(
                         it.toInt(),
                         dreamCastRelease.russian,
                         dreamCastRelease.image,
-                        DREAM_CAST,
+                        ReleaseSource.DreamCast.value,
                         dreamCastRelease.url)
                 }
                 _uiStateFavorite.value = true
@@ -105,12 +105,12 @@ class ReleaseDreamCastViewModel @Inject constructor(
                         id,
                         dreamCastRelease.russian,
                         dreamCastRelease.image,
-                        DREAM_CAST,
+                        ReleaseSource.DreamCast.value,
                         dreamCastRelease.url
                     )
                     _uiStateWatchList.value = true
                 } else {
-                    watchListRepository.removeFromWatchList(id, DREAM_CAST)
+                    watchListRepository.removeFromWatchList(id, ReleaseSource.DreamCast.value)
                     _uiStateWatchList.value = false
                 }
             }

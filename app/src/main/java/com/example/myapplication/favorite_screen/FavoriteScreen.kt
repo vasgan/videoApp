@@ -23,7 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
+import com.example.myapplication.data.ReleaseSource
 import com.example.myapplication.ui.CenterScreenProgressIndicator
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.ShimmerImage
@@ -65,26 +65,18 @@ fun FavoriteScreen(
                         favorite?.let {
                             items(it.size) { i ->
                                 Row {
-                                    if (favorite!![i].doubers == ANILIBERTY)
-                                        ShimmerImage(
-                                            "https://aniliberty.top/" + favorite!![i].imageUrl,
-                                            Modifier
-                                                .width(120.dp)
-                                                .wrapContentHeight()
-                                                .padding(16.dp)
-                                                .fillMaxSize(),
-                                            ContentScale.FillWidth, 8
-                                        )
-                                    else
-                                        ShimmerImage(
-                                            "https:" + favorite!![i].imageUrl,
-                                            Modifier
-                                                .width(120.dp)
-                                                .wrapContentHeight()
-                                                .padding(16.dp)
-                                                .fillMaxSize(),
-                                            ContentScale.FillWidth, 8
-                                        )
+                                    ShimmerImage(
+                                        ReleaseSource.posterUrl(
+                                            favorite!![i].doubers,
+                                            favorite!![i].imageUrl
+                                        ),
+                                        Modifier
+                                            .width(120.dp)
+                                            .wrapContentHeight()
+                                            .padding(16.dp)
+                                            .fillMaxSize(),
+                                        ContentScale.FillWidth, 8
+                                    )
 
                                     Text(
                                         text = favorite!![i].name,
