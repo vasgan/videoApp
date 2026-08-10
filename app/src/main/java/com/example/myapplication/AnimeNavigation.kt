@@ -7,6 +7,8 @@ import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
 import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_ID
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_URL
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
@@ -47,12 +49,13 @@ object AnimeDestinationsArgs {
     const val RELEASE_EPISODE = "release_episode"
     const val DOUBERS = "doubers"
     const val DREAMCAST_RELEASE_EPISODE = "dreamcast_release_episode"
+    const val DREAMCAST_RELEASE_ID = "dreamcast_release_id"
+    const val DREAMCAST_RELEASE_URL = "dreamcast_release_url"
 }
 
 object AnimeDestinations {
     const val MAIN_SCREEN_ROUTE = MAIN_SCREEN
     const val SEARCH_SCREEN_ROUTE = "$SEARCH_SCREEN?$GENRE_ID_ARG={$GENRE_ID_ARG}"
-    const val CURRENT_RELEASE_ROUTE = "$DETAIL_RELEASE_SCREEN?$RELEASE_ID_ARG={$RELEASE_ID_ARG}"
     const val PROFILE_SCREEN_ROUTE = PROFILE_SCREEN
     const val FAVORITE_SCREEN_ROUTE = FAVORITE_SCREEN
     const val GLOBAL_SEARCH_SCREEN_ROUTE = GLOBAL_SEARCH_SCREEN
@@ -95,6 +98,16 @@ class AnimeNavigation(private val navController: NavController) {
         navController.currentBackStackEntry
             ?.savedStateHandle
             ?.set(DREAMCAST_RELEASE_EPISODE, release)
+        navController.navigate(AnimeDestinations.dreamCastReleaseRoute(currentRootGraph()))
+    }
+
+    fun navigateToDreamCastReleaseFromFavorite(id: String, url: String?){
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(DREAMCAST_RELEASE_ID, id)
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(DREAMCAST_RELEASE_URL, url)
         navController.navigate(AnimeDestinations.dreamCastReleaseRoute(currentRootGraph()))
     }
 

@@ -11,4 +11,6 @@ interface DreamCastRepository {
     suspend fun getVideoUrls(urlRelease: String): DreamCastDescriptionAndSeries
 
     fun getReleases(pageNumber: Int = 1): Flow<List<DreamCastReleaseElement>>
+
+    suspend fun getReleaseById(urlRelease: String, id: String): DreamCastReleaseElement
 }

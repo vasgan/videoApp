@@ -1,6 +1,7 @@
 package com.example.myapplication.data.parse.dreamcast
 
 import android.os.Parcelable
+import com.example.myapplication.data.db.history.History.Companion.DREAM_CAST
 import com.example.myapplication.data.ui_data.Episode
 import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
@@ -60,10 +61,11 @@ fun mapToRelease(dreamCastSeries: DreamCastDescriptionAndSeries, dreamCastReleas
         dreamCastRelease.image + "",
         dreamCastSeries.description + "",
         dreamCastRelease.date + "",
-        listOf<Genres>(),
+        listOf(),
         dreamCastRelease.timers + "",
         dreamCastRelease.type + "",
         dreamCastRelease.duration + "",
         episode,
+        DREAM_CAST
     )
 }

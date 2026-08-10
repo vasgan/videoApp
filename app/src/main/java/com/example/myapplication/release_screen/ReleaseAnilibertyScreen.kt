@@ -2,7 +2,6 @@ package com.example.myapplication.release_screen
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,10 +61,11 @@ import com.example.myapplication.ui.setFullscreen
 @SuppressLint("StringFormatMatches")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReleaseScreen(
+fun ReleaseAnilibertyScreen(
     innerPadding: PaddingValues,
     viewModel: ReleaseScreenViewModel,
     id: String,
+    doubbers: String,
     onReleaseClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
     onEpisodeClick: (Int, Release) -> Unit,
@@ -80,7 +80,7 @@ fun ReleaseScreen(
     val activity = context.findActivity()
     LaunchedEffect(Unit) {
         activity?.setFullscreen(false)
-        viewModel.getCurrentRelease(id)
+        viewModel.getCurrentRelease(id, doubbers)
     }
     when (model) {
         is UiReleaseAniliberty.CompleteUiReleaseAniliberty ->

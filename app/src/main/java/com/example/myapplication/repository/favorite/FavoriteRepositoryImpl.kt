@@ -7,15 +7,15 @@ import kotlinx.coroutines.flow.flow
 
 class FavoriteRepositoryImpl(val favoriteDB: FavoriteDao) : FavoriteRepository {
 
-    override suspend fun addFavorite(id: Int, name: String, imageUrl: String) {
-        favoriteDB.upsert(Favorite(id, name, imageUrl))
+    override suspend fun addFavorite(id: Int, name: String, imageUrl: String, doubers: String, url: String?) {
+        favoriteDB.upsert(Favorite(id, name, imageUrl, doubers, url))
     }
 
     override suspend fun removeFavorite(id: Int) {
         favoriteDB.deleteById(id)
     }
 
-    override suspend  fun getFavorites(): List<Favorite>? {
+    override suspend  fun getFavorites(): List<Favorite> {
         return favoriteDB.getFavorites()
     }
 
@@ -25,7 +25,7 @@ class FavoriteRepositoryImpl(val favoriteDB: FavoriteDao) : FavoriteRepository {
             if (favorite != null)
                 emit(favorite)
             else
-                emit(Favorite(-1, "", ""))
+                emit(Favorite(-1, "", "", ""))
         }
     }
 }

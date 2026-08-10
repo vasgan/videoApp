@@ -1,7 +1,5 @@
 package com.example.myapplication.main_screen
 
-import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History

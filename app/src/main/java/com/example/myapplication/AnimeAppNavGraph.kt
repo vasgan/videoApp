@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -37,6 +38,8 @@ import com.example.myapplication.AnimeDestinations.SETTINGS_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinations.WILL_WATCH_SCREEN_ROUTE
 import com.example.myapplication.AnimeDestinationsArgs.DOUBERS
 import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_EPISODE
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_ID
+import com.example.myapplication.AnimeDestinationsArgs.DREAMCAST_RELEASE_URL
 import com.example.myapplication.AnimeDestinationsArgs.GENRE_ID_ARG
 import com.example.myapplication.AnimeDestinationsArgs.PLAYER_URLS
 import com.example.myapplication.AnimeDestinationsArgs.RELEASE_EPISODE
@@ -57,7 +60,7 @@ import com.example.myapplication.player.PlayerScreen
 import com.example.myapplication.profile_screen.ProfileScreen
 import com.example.myapplication.release_dreamcast.ReleaseDreamCastScreen
 import com.example.myapplication.release_dreamcast.ReleaseDreamCastViewModel
-import com.example.myapplication.release_screen.ReleaseScreen
+import com.example.myapplication.release_screen.ReleaseAnilibertyScreen
 import com.example.myapplication.release_screen.ReleaseScreenViewModel
 import com.example.myapplication.search_screen.SearchScreen
 import com.example.myapplication.search_screen.SearchScreenViewModel
@@ -256,8 +259,12 @@ fun AnimeAppNavGraph(
                     val viewModel: FavoriteScreenViewModel = viewModel(factory = viewModelFactory)
                     FavoriteScreen(
                         viewModel,
-                        {
-                            navActions.navigateFromFavoriteToReleaseScreen(it)
+                        onItemClick = { id, doubbers, url ->
+                            if (doubbers == ANILIBERTY)
+                                navActions.navigateFromFavoriteToReleaseScreen(id)
+                            else if (doubbers == DREAM_CAST) {
+                                navActions.navigateToDreamCastReleaseFromFavorite(id, url)
+                            }
                         },
                         {
                             navController.popBackStack()
@@ -339,34 +346,39 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
                 DREAMCAST_RELEASE_EPISODE
             )
         val viewModel: ReleaseDreamCastViewModel = viewModel(factory = viewModelFactory)
-        release?.let {
-            ReleaseDreamCastScreen(
-                PaddingValues(
-                    0.dp,
-                    0.dp,
-                    0.dp,
-                    innerPadding.calculateBottomPadding()
-                ),
-                viewModel,
-                release,
-                {},
-                { episodeNum, dreamCastRelease, dreamCastSeries ->
-                    navActions.navigateToPlayerScreen(
-                        episodeNum,
-                        mapToRelease(dreamCastSeries, dreamCastRelease),
-                        DREAM_CAST
-                    )
-                },
-                { navController.popBackStack() }
-            )
-        }
+        val url = navController.previousBackStackEntry?.savedStateHandle?.get<String>(
+            DREAMCAST_RELEASE_URL
+        )
+        val id = navController.previousBackStackEntry?.savedStateHandle?.get<String>(
+            DREAMCAST_RELEASE_ID
+        )
+        ReleaseDreamCastScreen(
+            PaddingValues(
+                0.dp,
+                0.dp,
+                0.dp,
+                innerPadding.calculateBottomPadding()
+            ),
+            viewModel,
+            release,
+            url,
+            id,
+            { episodeNum, dreamCastRelease, dreamCastSeries ->
+                navActions.navigateToPlayerScreen(
+                    episodeNum,
+                    mapToRelease(dreamCastSeries, dreamCastRelease),
+                    DREAM_CAST
+                )
+            },
+            { navController.popBackStack() }
+        )
     }
 
     composable(AnimeDestinations.currentReleaseRoute(rootGraph)) { entry ->
         val viewModel: ReleaseScreenViewModel = viewModel(factory = viewModelFactory)
         val taskId = entry.arguments?.getString(RELEASE_ID_ARG)
         taskId?.let {
-            ReleaseScreen(
+            ReleaseAnilibertyScreen(
                 PaddingValues(
                     0.dp,
                     0.dp,
@@ -375,6 +387,7 @@ private fun NavGraphBuilder.releaseDetailsRoutes(
                 ),
                 viewModel,
                 it,
+                ANILIBERTY,
                 onReleaseClick = { releaseId ->
                     navActions.navigateFromReleaseToRelease(releaseId)
                 },

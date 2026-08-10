@@ -1,5 +1,6 @@
 package com.example.myapplication.favorite_screen
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.myapplication.data.db.history.History.Companion.ANILIBERTY
 import com.example.myapplication.ui.CenterScreenProgressIndicator
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.ShimmerImage
@@ -31,7 +33,7 @@ import com.example.myapplication.ui.SimpleTopBar
 @Composable
 fun FavoriteScreen(
     viewModel: FavoriteScreenViewModel,
-    onItemClick: (String) -> Unit,
+    onItemClick: (String, String, String?) -> Unit,
     onBackClick: () -> Unit
 ) {
     val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
@@ -43,14 +45,17 @@ fun FavoriteScreen(
                 favorite == null -> {
                     CenterScreenProgressIndicator()
                 }
+
                 favorite!!.isEmpty() -> {
                     EmptyState(
                         title = stringResource(R.string.empty_favorite),
                         modifier = Modifier
                             .padding(innerPaddingValues)
                             .fillMaxSize(),
-                        icon = painterResource( R.drawable.baseline_star_outline_24))
+                        icon = painterResource(R.drawable.baseline_star_outline_24)
+                    )
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -60,20 +65,36 @@ fun FavoriteScreen(
                         favorite?.let {
                             items(it.size) { i ->
                                 Row {
-                                    ShimmerImage(
-                                        "https://aniliberty.top/" + favorite!![i].imageUrl,
-                                        Modifier
-                                            .width(120.dp)
-                                            .wrapContentHeight()
-                                            .padding(16.dp)
-                                            .fillMaxSize(),
-                                        ContentScale.FillWidth, 8
-                                    )
+                                    if (favorite!![i].doubers == ANILIBERTY)
+                                        ShimmerImage(
+                                            "https://aniliberty.top/" + favorite!![i].imageUrl,
+                                            Modifier
+                                                .width(120.dp)
+                                                .wrapContentHeight()
+                                                .padding(16.dp)
+                                                .fillMaxSize(),
+                                            ContentScale.FillWidth, 8
+                                        )
+                                    else
+                                        ShimmerImage(
+                                            "https:" + favorite!![i].imageUrl,
+                                            Modifier
+                                                .width(120.dp)
+                                                .wrapContentHeight()
+                                                .padding(16.dp)
+                                                .fillMaxSize(),
+                                            ContentScale.FillWidth, 8
+                                        )
+
                                     Text(
                                         text = favorite!![i].name,
                                         modifier = Modifier
                                             .clickable {
-                                                onItemClick(favorite!![i].id.toString())
+                                                onItemClick(
+                                                    favorite!![i].id.toString(),
+                                                    favorite!![i].doubers,
+                                                    favorite!![i].url
+                                                )
                                             }
                                             .padding(PaddingValues(0.dp, 16.dp, 16.dp, 16.dp)),
                                         style = TextStyle(

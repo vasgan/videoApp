@@ -41,9 +41,12 @@ class DreamCastRepositoryImpl : DreamCastRepository {
         }.flowOn(Dispatchers.IO)
     }
 
+    override suspend fun getReleaseById(urlRelease: String, id: String): DreamCastReleaseElement {
+        return getDreamCastReleaseByUrl(urlRelease, id)
+    }
 
     override suspend fun getVideoUrls(urlRelease: String): DreamCastDescriptionAndSeries {
-        return getHtml(urlRelease)
+        return getDreamCastDescriptionAndSeries(urlRelease)
     }
 
     override fun getReleases(pageNumber: Int): Flow<List<DreamCastReleaseElement>> {
@@ -64,7 +67,50 @@ class DreamCastRepositoryImpl : DreamCastRepository {
             Gson().fromJson(html, BaseDreamCastSearch::class.java).releases
         }
 
-    private suspend fun getHtml(url: String): DreamCastDescriptionAndSeries {
+    private suspend fun getDreamCastReleaseByUrl(url: String, id: String): DreamCastReleaseElement{
+        var release = DreamCastReleaseElement("","","","","","","","","","","","","","","","","","","", "","","","")
+        var html = ""
+        val client = OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+        withContext(Dispatchers.IO) {
+            val req = Request.Builder()
+                .url("https://dreamerscast.com/$url")
+                .header("User-Agent", "Mozilla/5.0 (Kotlin)")
+                .header("Accept-Language", "ru")
+                .build()
+
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) error("HTTP ${resp.code}")
+                html = resp.body.string() // автоматически разжимает gzip/deflate
+            }
+
+            val imageFirst = html.indexOf("property=\"og:image\" content=\"") + "property=\"og:image\" content=\"".length
+            val imageEnd = html.indexOf("\">", imageFirst)
+            val image = html.substring(imageFirst, imageEnd)
+            val firstName = "<div class=\"col-md-8 postInfo\">\n" +
+                    "                <div class=\"postItem\">\n" +
+                    "                    <h3>"
+            val nameRuFirst = html.indexOf(firstName) + firstName.length - 12
+            val nameRuSecond = html.indexOf(" / ", nameRuFirst)
+            val russian = html.substring(nameRuFirst, nameRuSecond)
+            val originalStart = nameRuSecond + " / ".length
+            val originalSecond = html.indexOf("</h3>")
+            val original = html.substring(originalStart, originalSecond)
+
+            // todo сделать парсинг жанров и количества эпизодов
+
+            release = DreamCastReleaseElement(id,
+                russian,
+                original,
+                image,"","","","","","",
+                "","","","","","","","","", "","","","")
+        }
+        return release
+    }
+
+    private suspend fun getDreamCastDescriptionAndSeries(url: String): DreamCastDescriptionAndSeries {
         var html = ""
         var strings = emptyList<String>()
         var descriptionText = ""

@@ -2,6 +2,7 @@ package com.example.myapplication.release_dreamcast
 
 import android.annotation.SuppressLint
 import android.text.Html
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
 import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
@@ -58,28 +60,53 @@ import com.example.myapplication.ui.ShimmerImage
 fun ReleaseDreamCastScreen(
     innerPadding: PaddingValues,
     viewModel: ReleaseDreamCastViewModel,
-    dreamCastRelease: DreamCastReleaseElement,
-    onReleaseClick: (String) -> Unit,
+    dreamCastReleaseFromData: DreamCastReleaseElement?,
+    url: String?,
+    id: String?,
     onEpisodeClick: (Int, DreamCastReleaseElement, DreamCastDescriptionAndSeries) -> Unit,
     onBackClick: () -> Unit
 ) {
-    viewModel.getSeriesList("https://dreamerscast.com" + dreamCastRelease.url)
-    viewModel.getHistory(dreamCastRelease.id.toInt())
+    var dreamCastRelease = dreamCastReleaseFromData
+    if (!url.isNullOrEmpty() && !id.isNullOrEmpty()) {
+        viewModel.initRelease(url, id)
+        dreamCastRelease = viewModel.uiStateRelease.collectAsStateWithLifecycle().value
+        viewModel.getHistory(id.toInt())
+        viewModel.initFavorite(id.toInt())
+        viewModel.getSeriesList("https://dreamerscast.com$url")
+    } else {
+        if (dreamCastReleaseFromData != null) {
+            viewModel.getHistory(dreamCastReleaseFromData.id.toInt())
+            viewModel.initFavorite(dreamCastReleaseFromData.id.toInt())
+            viewModel.getSeriesList("https://dreamerscast.com" + dreamCastReleaseFromData.url)
+        }
+    }
+
     val model by viewModel.uiState.collectAsStateWithLifecycle()
     val history by viewModel.uiStateHistory.collectAsStateWithLifecycle()
+    val favorite by viewModel.favoriteUiState.collectAsStateWithLifecycle()
+
     LazyColumn(
         modifier = Modifier
             .padding(innerPadding)
             .fillMaxSize()
     ) {
         item {
-            ShimmerImage(
-                url = "https://" + dreamCastRelease.image,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                ContentScale.Crop, 0
-            )
+            val image = dreamCastRelease?.image?.let {
+                if (it.indexOf("://") >= 0) {
+                    dreamCastRelease.image
+                } else {
+                    "https://" + dreamCastRelease.image
+                }
+            }
+            image?.let {
+                ShimmerImage(
+                    url = it,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    ContentScale.Crop, 0
+                )
+            }
             FilledTonalButton(
                 modifier = Modifier
                     .padding(
@@ -91,9 +118,9 @@ fun ReleaseDreamCastScreen(
                     .fillMaxWidth(), onClick = {
                     model?.let {
                         if (history == null)
-                            onEpisodeClick(0, dreamCastRelease, it)
+                            dreamCastRelease?.let { p2 -> onEpisodeClick(0, p2, it) }
                         else
-                            onEpisodeClick(history!!.episodeNumber, dreamCastRelease, it)
+                            dreamCastRelease?.let { p2 -> onEpisodeClick(history!!.episodeNumber, p2, it) }
                     }
                 }) {
                 if (history == null)
@@ -110,21 +137,23 @@ fun ReleaseDreamCastScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val name = dreamCastRelease.russian
-                Text(
-                    text = name,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(PaddingValues(16.dp, 16.dp, 0.dp, 0.dp)),
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.headlineSmall
-                )
+                val name = dreamCastRelease?.russian
+                name?.let {
+                    Text(
+                        text = htmlToAnnotatedString(it),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(PaddingValues(16.dp, 16.dp, 0.dp, 0.dp)),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
                 Image(
                     modifier = Modifier
                         .size(48.dp)
                         .padding(PaddingValues(8.dp, 16.dp, 8.dp, 0.dp))
                         .clickable {
-
+                            //todo watch letter
                         },
                     painter = painterResource(id = R.drawable.add_to_queue_24dp),
                     contentDescription = "",
@@ -135,9 +164,10 @@ fun ReleaseDreamCastScreen(
                         .size(48.dp)
                         .padding(PaddingValues(8.dp, 16.dp, 8.dp, 0.dp))
                         .clickable {
-
+                            viewModel.changeFavorite(dreamCastRelease)
                         },
-                    painter = painterResource(id = R.drawable.baseline_star_outline_24),
+                    painter = if (favorite) painterResource(id = R.drawable.baseline_star_24)
+                    else painterResource(id = R.drawable.baseline_star_outline_24),
                     contentDescription = "",
                     contentScale = ContentScale.Crop
                 )
@@ -154,7 +184,7 @@ fun ReleaseDreamCastScreen(
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                         append(LocalContext.current.getString(R.string.genres) + " ")
                     }
-                    append(dreamCastRelease.genres)
+                    dreamCastRelease?.let { append(it.genres) }
                 }, modifier = Modifier
                     .padding(PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)),
                 style = MaterialTheme.typography.bodyLarge
@@ -168,8 +198,8 @@ fun ReleaseDreamCastScreen(
                     append(
                         LocalContext.current.getString(
                             R.string.episodes,
-                            dreamCastRelease.series,
-                            dreamCastRelease.currentSeries
+                            dreamCastRelease?.series,
+                            dreamCastRelease?.currentSeries
                         )
                     )
                 }, modifier = Modifier
@@ -196,7 +226,7 @@ fun ReleaseDreamCastScreen(
         model?.series?.size?.let { it1 ->
             items(it1) { i ->
                 EpisodeItem((i + 1).toString(), {
-                    onEpisodeClick(i, dreamCastRelease, model!!)
+                    dreamCastRelease?.let { onEpisodeClick(i, it, model!!) }
                 })
             }
 
@@ -269,4 +299,8 @@ fun EpisodeItem(
             color = Color.LightGray
         )
     }
+}
+fun htmlToAnnotatedString(html: String): AnnotatedString {
+    val spanned = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
+    return AnnotatedString(spanned.toString())
 }

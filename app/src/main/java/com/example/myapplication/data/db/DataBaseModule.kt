@@ -19,7 +19,7 @@ class DataBaseModule {
     fun provideDataBase(context: Context): AppDataBase {
         return Room.databaseBuilder(
             context.applicationContext, AppDataBase::class.java, "appDataBase"
-        ).build()
+        ).fallbackToDestructiveMigration(true).build()
     }
 
     @Provides

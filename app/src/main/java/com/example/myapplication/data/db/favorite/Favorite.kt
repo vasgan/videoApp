@@ -4,10 +4,12 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "favorite"
+    tableName = "favorite",
+    primaryKeys = ["id", "doubers"]
 )
 data class Favorite (
-    @PrimaryKey
     val id: Int,
     val name: String,
-    val imageUrl: String)
+    val imageUrl: String,
+    val doubers: String,
+    val url: String? = null)

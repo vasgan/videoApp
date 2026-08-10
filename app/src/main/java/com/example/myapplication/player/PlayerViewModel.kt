@@ -226,7 +226,7 @@ class PlayerViewModel @Inject constructor(
             val imageUrl = _uiStateRelease.value?.poster
             if (id != null && name != null && imageUrl != null)
                 if (!_uiStateFavorite.value) {
-                    favoriteRepository.addFavorite(id, name, imageUrl)
+                    favoriteRepository.addFavorite(id, name, imageUrl, doubersVm)
                     _uiStateFavorite.value = true
                 } else {
                     favoriteRepository.removeFavorite(id)

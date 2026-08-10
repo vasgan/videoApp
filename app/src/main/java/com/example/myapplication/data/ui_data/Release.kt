@@ -14,5 +14,6 @@ data class Release(
     val ageRating: String,
     val type: String,
     val durationByEpisode: String,
-    val episodes: List<Episode>
+    val episodes: List<Episode>,
+    val doubbers: String
 ) : Parcelable

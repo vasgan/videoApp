@@ -60,7 +60,7 @@ class ReleaseScreenViewModel @Inject constructor(
     private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
     val uiStateHistory: StateFlow<History?> = _uiStateHistory.asStateFlow()
 
-    fun getCurrentRelease(id: String) {
+    fun getCurrentRelease(id: String, doubbers: String) {
         getHistory(id.toInt())
         repository.getRelease(id).onEach {
             when (it) {
@@ -74,7 +74,7 @@ class ReleaseScreenViewModel @Inject constructor(
 
                 is Success<*> -> {
                     _uiStateRelease.value =
-                        UiReleaseAniliberty.CompleteUiReleaseAniliberty(mapRelease(it.data as FullReleaseResponse))
+                        UiReleaseAniliberty.CompleteUiReleaseAniliberty(mapRelease(it.data as FullReleaseResponse, doubbers))
                 }
             }
         }.launchIn(viewModelScope)
@@ -120,7 +120,7 @@ class ReleaseScreenViewModel @Inject constructor(
         }
     }
 
-    private fun mapRelease(release: FullReleaseResponse) = Release(
+    private fun mapRelease(release: FullReleaseResponse, doubbers: String) = Release(
         release.id,
         release.name.main,
         release.poster.preview,
@@ -131,6 +131,7 @@ class ReleaseScreenViewModel @Inject constructor(
         release.type.description + " (" + release.episodes.size + ")," + release.averageDurationOfEpisode + "мин",
         (release.averageDurationOfEpisode).toString(),
         mapEpisodes(release.episodes),
+        doubbers
     )
 
     private fun mapGenres(list: List<GenresResponse>): List<Genres> {
@@ -191,9 +192,10 @@ class ReleaseScreenViewModel @Inject constructor(
                 val id = _uiStateRelease.value?.release?.id?.toInt()
                 val name = _uiStateRelease.value?.release?.name
                 val poster = _uiStateRelease.value?.release?.poster
-                if (id != null && name != null && poster != null)
+                val doubers = _uiStateRelease.value?.release?.doubbers
+                if (id != null && name != null && poster != null && doubers != null)
                     if (!_uiStateFavorite.value) {
-                        favoriteRepository.addFavorite(id, name, poster)
+                        favoriteRepository.addFavorite(id, name, poster, doubers)
                         _uiStateFavorite.value = true
                     } else {
                         favoriteRepository.removeFavorite(id)
