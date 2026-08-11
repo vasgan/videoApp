@@ -1,6 +1,7 @@
 package com.example.myapplication.watch
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,10 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -23,11 +27,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
 import com.example.myapplication.data.ReleaseSource
+import com.example.myapplication.helpers.htmlToAnnotatedString
 import com.example.myapplication.ui.CenterScreenProgressIndicator
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.ShimmerImage
 import com.example.myapplication.ui.SimpleTopBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchScreen(
     viewModel: WatchScreenViewModel,
@@ -35,64 +41,76 @@ fun WatchScreen(
     onBackClick: () -> Unit
 ) {
     val watchListItems by viewModel.watchListUiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
             SimpleTopBar(R.string.views_plans) { onBackClick() }
         }, content = { innerPaddingValues ->
-            val currentWatchListItems = watchListItems
-            when {
-                currentWatchListItems == null -> {
-                    CenterScreenProgressIndicator()
-                }
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
+                modifier = Modifier
+                    .padding(innerPaddingValues)
+                    .fillMaxSize()
+            ) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    val currentWatchListItems = watchListItems
+                    when {
+                        currentWatchListItems == null -> {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillParentMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CenterScreenProgressIndicator()
+                                }
+                            }
+                        }
 
-                currentWatchListItems.isEmpty() -> {
-                    EmptyState(
-                        title = stringResource(R.string.empty_watch_letter),
-                        modifier = Modifier
-                            .padding(innerPaddingValues)
-                            .fillMaxSize(),
-                        icon = painterResource(R.drawable.add_to_queue_24dp)
-                    )
-                }
-
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .padding(innerPaddingValues)
-                            .fillMaxSize()
-                    ) {
-                        items(currentWatchListItems.size) { i ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onItemClick(
-                                            currentWatchListItems[i].id,
-                                            currentWatchListItems[i].doubers,
-                                            currentWatchListItems[i].url
-                                        )
-                                    }) {
-                                ShimmerImage(
-                                    ReleaseSource.posterUrl(
-                                        currentWatchListItems[i].doubers,
-                                        currentWatchListItems[i].imageUrl
-                                    ),
-                                    Modifier
-                                        .width(120.dp)
-                                        .wrapContentHeight()
-                                        .padding(start = 16.dp, top = 8.dp, bottom = 16.dp)
-                                        .fillMaxSize(),
-                                    ContentScale.FillWidth, 8
+                        currentWatchListItems.isEmpty() -> {
+                            item {
+                                EmptyState(
+                                    title = stringResource(R.string.empty_watch_letter),
+                                    modifier = Modifier.fillParentMaxSize(),
+                                    icon = painterResource(R.drawable.add_to_queue_24dp)
                                 )
-                                Text(
-                                    text = currentWatchListItems[i].name,
+                            }
+                        }
+
+                        else -> {
+                            items(currentWatchListItems.size) { i ->
+                                Row(
                                     modifier = Modifier
-                                        .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
-                                    style = TextStyle(
-                                        fontSize = 16.sp,
-                                        lineHeight = 16.sp
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onItemClick(
+                                                currentWatchListItems[i].id,
+                                                currentWatchListItems[i].doubers,
+                                                currentWatchListItems[i].url
+                                            )
+                                        }) {
+                                    ShimmerImage(
+                                        ReleaseSource.posterUrl(
+                                            currentWatchListItems[i].doubers,
+                                            currentWatchListItems[i].imageUrl
+                                        ),
+                                        Modifier
+                                            .width(120.dp)
+                                            .wrapContentHeight()
+                                            .padding(start = 16.dp, top = 8.dp, bottom = 16.dp)
+                                            .fillMaxSize(),
+                                        ContentScale.FillWidth, 8
                                     )
-                                )
+                                    Text(
+                                        text = htmlToAnnotatedString(currentWatchListItems[i].name),
+                                        modifier = Modifier
+                                            .padding(PaddingValues(16.dp, 16.dp, 16.dp, 0.dp)),
+                                        style = TextStyle(
+                                            fontSize = 16.sp,
+                                            lineHeight = 16.sp
+                                        )
+                                    )
+                                }
                             }
                         }
                     }

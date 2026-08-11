@@ -1,6 +1,5 @@
 package com.example.myapplication.main_screen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -35,7 +34,7 @@ class MainViewModel @Inject constructor(
     private val _uiStateLoadHistory: MutableStateFlow<History?> = MutableStateFlow(null)
     val uiStateHistory: StateFlow<History?> = _uiStateLoadHistory.asStateFlow()
 
-    private var loadAnilibria: Job? = null
+    private var loadAniLiberty: Job? = null
     private var loadDreamCast: Job? = null
     private var pageAl = 1
     private var pageDC = 1
@@ -58,6 +57,10 @@ class MainViewModel @Inject constructor(
         loadOnDreamCast()
     }
 
+    fun refreshDreamCast() {
+        getDreamCastReleases()
+    }
+
     fun scrollEndDC() {
         if (loadDreamCast != null) return
         pageDC++
@@ -65,22 +68,27 @@ class MainViewModel @Inject constructor(
     }
 
     fun getAnilibertyLastReleases() {
-        if (loadAnilibria != null) return
+        if (loadAniLiberty != null) return
         pageAl = 1
-        loadOnAnilibria()
+        loadOnAniliberty()
+    }
+
+    fun refreshAniliberty() {
+        getAnilibertyLastReleases()
+        loadHistory()
     }
 
     fun scrollEndAnilibria() {
-        if (loadAnilibria != null) return
+        if (loadAniLiberty != null) return
         pageAl++
-        loadOnAnilibria()
+        loadOnAniliberty()
     }
 
-    private fun loadOnAnilibria() {
-        loadAnilibria = repository.getReleases(pageAl).onEach {
+    private fun loadOnAniliberty() {
+        loadAniLiberty = repository.getReleases(pageAl).onEach {
             _uiState.value = when(it) {
                 is Error -> {
-                    loadAnilibria = null
+                    loadAniLiberty = null
                     if (pageAl > 1)
                         ErrorAl(_uiState.value?.releases, it.networkError)
                     else ErrorAl(error = it.networkError)
@@ -90,7 +98,7 @@ class MainViewModel @Inject constructor(
                         LoadingNextAl(_uiState.value?.releases)
                     else LoadingFirstAl()
                 is Success -> {
-                    loadAnilibria = null
+                    loadAniLiberty = null
                     if (pageAl > 1)
                     CompleteLoadAniliberty(_uiState.value?.releases?.plus(it.data))
                     else CompleteLoadAniliberty(it.data)

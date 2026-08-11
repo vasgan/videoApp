@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.R
 import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.helpers.htmlToAnnotatedString
 import com.example.myapplication.ui.ShimmerImage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -312,9 +313,4 @@ fun EpisodeItem(
             color = Color.LightGray
         )
     }
-}
-
-fun htmlToAnnotatedString(html: String): AnnotatedString {
-    val spanned = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
-    return AnnotatedString(spanned.toString())
 }

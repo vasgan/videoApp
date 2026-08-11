@@ -15,8 +15,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -43,6 +45,7 @@ import com.example.myapplication.ui.ReleaseElementView
 import com.example.myapplication.ui.ReleaseElementViewDreamCast
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("FrequentlyChangingValue")
 @Composable
 fun ListScreen(
@@ -100,92 +103,157 @@ fun ListScreen(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                when (page) {
-                    0 ->
-                        when (itemsAniliberty) {
-                            is CompleteLoadAniliberty,
-                            is LoadingNextAl ->
-                                LazyColumn(
-                                    state = listAlState,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = innerPadding,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    historyAL?.let {
-                                        item {
-                                            ShowHistory(it, {
+            when (page) {
+                0 -> AnilibertyPage(
+                    innerPadding = innerPadding,
+                    state = itemsAniliberty,
+                    history = historyAL,
+                    listState = listAlState,
+                    onRefresh = viewModel::refreshAniliberty,
+                    onScrollEnd = viewModel::scrollEndAnilibria,
+                    onItemClick = onItemClick
+                )
 
-                                            })
-                                        }
-                                    }
-                                    itemsAniliberty?.releases?.let { elements ->
-                                        items(elements.size) { item ->
-                                            if (item > elements.lastIndex - 3)
-                                                viewModel.scrollEndAnilibria()
-                                            ReleaseElementView(elements[item], onItemClick)
-                                        }
-                                    }
-                                    if (itemsAniliberty is LoadingNextAl)
-                                        items(1) {
-                                            LoadingSpinner()
-                                        }
-                                }
+                1 -> DreamCastPage(
+                    innerPadding = innerPadding,
+                    state = itemsDreamCast,
+                    listState = listDcState,
+                    onRefresh = viewModel::refreshDreamCast,
+                    onScrollEnd = viewModel::scrollEndDC,
+                    onItemClick = onDreamCastItemClick
+                )
+            }
+        }
+    }
+}
 
-                            is ErrorAl -> {
-                                (itemsAniliberty as? ErrorAl)?.let { ErrorState(it.error) }
-                            }
-                            is LoadingFirstAl -> {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(40.dp),
-                                    strokeWidth = 4.dp
-                                )
-                            }
-
-                            null -> {}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AnilibertyPage(
+    innerPadding: PaddingValues,
+    state: UiAnilibertyState?,
+    history: History?,
+    listState: LazyListState,
+    onRefresh: () -> Unit,
+    onScrollEnd: () -> Unit,
+    onItemClick: (String) -> Unit
+) {
+    PullToRefreshBox(
+        isRefreshing = state is LoadingFirstAl,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (state) {
+                is CompleteLoadAniliberty,
+                is LoadingNextAl -> {
+                    history?.let {
+                        item {
+                            ShowHistory(it, {})
                         }
+                    }
+                    state.releases?.let { elements ->
+                        items(elements.size) { item ->
+                            if (item > elements.lastIndex - 3)
+                                onScrollEnd()
+                            ReleaseElementView(elements[item], onItemClick)
+                        }
+                    }
+                    if (state is LoadingNextAl)
+                        item {
+                            LoadingSpinner()
+                        }
+                }
 
-                    1 -> {
-                        when (itemsDreamCast) {
-                            is LoadingNextDC,
-                            is CompleteLoadDreamCast -> {
-                                LazyColumn(
-                                    state = listDcState,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = innerPadding,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    itemsDreamCast?.releases?.let { list ->
-                                        items(list.size) { item ->
-                                            if (item > list.lastIndex - 3)
-                                                viewModel.scrollEndDC()
-                                            ReleaseElementViewDreamCast(list[item]) {
-                                                onDreamCastItemClick(list[item])
-                                            }
-                                        }
-                                        if (itemsDreamCast is LoadingNextDC)
-                                            items(1) {
-                                                LoadingSpinner()
-                                            }
-                                    }
-                                }
-                            }
+                is ErrorAl -> {
+                    item {
+                        ErrorState(
+                            error = state.error,
+                            modifier = Modifier.fillParentMaxSize()
+                        )
+                    }
+                }
 
-                            is ErrorDC -> {
-                                (itemsDreamCast as? ErrorDC)?.let { ErrorState(it.error) }
-                            }
-                            is LoadingFirstDC -> {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(40.dp),
-                                    strokeWidth = 4.dp
-                                )
-                            }
+                is LoadingFirstAl -> {
+                    item {
+                        PageProgress(Modifier.fillParentMaxSize())
+                    }
+                }
 
-                            null ->
-                                Text(stringResource(R.string.not_available_in_this_region))
+                null -> Unit
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DreamCastPage(
+    innerPadding: PaddingValues,
+    state: UiDreamCastState?,
+    listState: LazyListState,
+    onRefresh: () -> Unit,
+    onScrollEnd: () -> Unit,
+    onItemClick: (DreamCastReleaseElement) -> Unit
+) {
+    PullToRefreshBox(
+        isRefreshing = state is LoadingFirstDC,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (state) {
+                is CompleteLoadDreamCast,
+                is LoadingNextDC -> {
+                    state.releases?.let { list ->
+                        items(list.size) { item ->
+                            if (item > list.lastIndex - 3)
+                                onScrollEnd()
+                            ReleaseElementViewDreamCast(list[item]) {
+                                onItemClick(list[item])
+                            }
+                        }
+                    }
+                    if (state is LoadingNextDC)
+                        item {
+                            LoadingSpinner()
+                        }
+                }
+
+                is ErrorDC -> {
+                    item {
+                        ErrorState(
+                            error = state.error,
+                            modifier = Modifier.fillParentMaxSize()
+                        )
+                    }
+                }
+
+                is LoadingFirstDC -> {
+                    item {
+                        PageProgress(Modifier.fillParentMaxSize())
+                    }
+                }
+
+                null -> {
+                    item {
+                        Box(
+                            modifier = Modifier.fillParentMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(stringResource(R.string.not_available_in_this_region))
                         }
                     }
                 }
@@ -195,10 +263,26 @@ fun ListScreen(
 }
 
 @Composable
-private fun ErrorState(error: NetworkError) {
+private fun PageProgress(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(40.dp),
+            strokeWidth = 4.dp
+        )
+    }
+}
+
+@Composable
+private fun ErrorState(
+    error: NetworkError,
+    modifier: Modifier = Modifier.fillMaxSize()
+) {
     EmptyState(
         title = stringResource(error.titleRes()),
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
         icon = painterResource(R.drawable.baseline_history_24)
     )
 }

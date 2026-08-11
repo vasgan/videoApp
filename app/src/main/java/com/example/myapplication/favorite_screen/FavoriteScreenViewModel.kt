@@ -9,6 +9,7 @@ import com.example.myapplication.repository.video.ReleaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,13 +19,29 @@ class FavoriteScreenViewModel @Inject constructor(
 ) : ViewModel()  {
     private val _uiState: MutableStateFlow<Release?> = MutableStateFlow(null)
     private val _uiStateFavorite: MutableStateFlow<List<Favorite>?> = MutableStateFlow(null)
+    private val _isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val uiState: StateFlow<Release?> = _uiState.asStateFlow()
     val favoriteUiState: StateFlow<List<Favorite>?> = _uiStateFavorite.asStateFlow()
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
+        loadFavorites(showRefreshing = false)
+    }
+
+    fun refresh() {
+        loadFavorites(showRefreshing = true)
+    }
+
+    private fun loadFavorites(showRefreshing: Boolean) {
         viewModelScope.launch {
-            val favorites = favoriteRepository.getFavorites()
-            _uiStateFavorite.value = favorites
+            if (showRefreshing) _isRefreshing.value = true
+            try {
+                val favorites = favoriteRepository.getFavorites()
+                _uiStateFavorite.value = favorites
+                if (showRefreshing) delay(400)
+            } finally {
+                if (showRefreshing) _isRefreshing.value = false
+            }
         }
     }
 }
