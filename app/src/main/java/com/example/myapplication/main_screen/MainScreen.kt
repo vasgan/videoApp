@@ -30,11 +30,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import com.example.myapplication.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.LoadingSpinner
 import com.example.myapplication.ui.ReleaseElementView
 import com.example.myapplication.ui.ReleaseElementViewDreamCast
@@ -132,7 +135,9 @@ fun ListScreen(
                                         }
                                 }
 
-                            is ErrorAl -> {}
+                            is ErrorAl -> {
+                                (itemsAniliberty as? ErrorAl)?.let { ErrorState(it.error) }
+                            }
                             is LoadingFirstAl -> {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(40.dp),
@@ -169,7 +174,9 @@ fun ListScreen(
                                 }
                             }
 
-                            is ErrorDC -> {}//TODO(сделать обработку ошибок)
+                            is ErrorDC -> {
+                                (itemsDreamCast as? ErrorDC)?.let { ErrorState(it.error) }
+                            }
                             is LoadingFirstDC -> {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(40.dp),
@@ -184,6 +191,23 @@ fun ListScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ErrorState(error: NetworkError) {
+    EmptyState(
+        title = stringResource(error.titleRes()),
+        modifier = Modifier.fillMaxSize(),
+        icon = painterResource(R.drawable.baseline_history_24)
+    )
+}
+
+private fun NetworkError.titleRes(): Int {
+    return when (this) {
+        NetworkError.ApiUnavailable -> R.string.api_unavailable
+        NetworkError.NoInternet -> R.string.internet_unavailable
+        is NetworkError.Other -> R.string.other_load_error
     }
 }
 

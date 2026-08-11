@@ -4,6 +4,7 @@ import android.util.Base64
 import android.util.Log
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
+import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.network.NetworkResponseWrapper
 import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.parse.dreamcast.BaseDreamCastSearch
@@ -31,13 +32,12 @@ class DreamCastRepositoryImpl : DreamCastRepository {
             val result = fetchReleasesBySearch(search, pageNumber)
             emit(Success(result))
         }.catch {
-            if (it is SocketTimeoutException) {
-
-            }
-            if (it is UnknownHostException) {
-
-            }
-            emit(Error(it.message.toString()))
+            emit(
+                Error(
+                    it.message.toString(),
+                    networkError = NetworkError.fromThrowable(it)
+                )
+            )
         }.flowOn(Dispatchers.IO)
     }
 

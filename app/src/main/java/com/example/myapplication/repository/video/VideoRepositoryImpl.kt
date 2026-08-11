@@ -4,6 +4,7 @@ import com.example.myapplication.data.db.video.VideoDao
 import com.example.myapplication.data.network.Api
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
+import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.network.NetworkResponseWrapper
 import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.network.request.RequestFilter
@@ -36,10 +37,11 @@ class VideoRepositoryImpl @Inject constructor(
                     emit(Success(it.data))
                 }
             } else {
-                emit(Error(result.message() ?: "Unknown error"))
+                val message = result.message() ?: "Unknown error"
+                emit(Error(message, networkError = NetworkError.fromHttpCode(result.code(), message)))
             }
         }.catch { e ->
-            emit(Error(e.message ?: "Unexpected error"))
+            emit(Error(e.message ?: "Unexpected error", networkError = NetworkError.fromThrowable(e)))
         }
             .flowOn(Dispatchers.IO)
     }
@@ -49,7 +51,7 @@ class VideoRepositoryImpl @Inject constructor(
             emit(Loading())
             emit(Success(api.getRelease(id)))
         }.catch { e ->
-            emit(Error(e.message ?: "Unexpected error"))
+            emit(Error(e.message ?: "Unexpected error", networkError = NetworkError.fromThrowable(e)))
         }
             .flowOn(Dispatchers.IO)
     }
@@ -76,7 +78,7 @@ class VideoRepositoryImpl @Inject constructor(
             val result = api.getSearchWithFilter(searchRequest).body()?.data
             emit(Success(result))
         }.catch { e ->
-            emit(Error(e.message ?: "Unexpected error"))
+            emit(Error(e.message ?: "Unexpected error", networkError = NetworkError.fromThrowable(e)))
         }
             .flowOn(Dispatchers.IO)
     }
@@ -86,7 +88,7 @@ class VideoRepositoryImpl @Inject constructor(
             emit(Loading())
             emit(Success(api.getFranchises(id)))
         }.catch { e ->
-            emit(Error(e.message ?: "Unexpected error"))
+            emit(Error(e.message ?: "Unexpected error", networkError = NetworkError.fromThrowable(e)))
         }
             .flowOn(Dispatchers.IO)
     }

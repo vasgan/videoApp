@@ -1,10 +1,12 @@
 package com.example.myapplication.main_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
+import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
@@ -80,8 +82,8 @@ class MainViewModel @Inject constructor(
                 is Error -> {
                     loadAnilibria = null
                     if (pageAl > 1)
-                        ErrorAl(_uiState.value?.releases)
-                    else ErrorAl()
+                        ErrorAl(_uiState.value?.releases, it.networkError)
+                    else ErrorAl(error = it.networkError)
                 }
                 is Loading ->
                     if (pageAl > 1)
@@ -104,7 +106,9 @@ class MainViewModel @Inject constructor(
                 _uiStateDreamCast.value = when (it) {
                     is Error -> {
                         loadDreamCast = null
-                        ErrorDC()
+                        if (pageDC > 1)
+                            ErrorDC(_uiStateDreamCast.value?.releases, it.networkError)
+                        else ErrorDC(error = it.networkError)
                     }
 
                     is Loading -> {
@@ -130,12 +134,18 @@ sealed class UiDreamCastState(val releases: List<DreamCastReleaseElement>? = nul
 
 class LoadingFirstDC(releases: List<DreamCastReleaseElement>? = null) : UiDreamCastState(releases)
 class CompleteLoadDreamCast(releases: List<DreamCastReleaseElement>) : UiDreamCastState(releases)
-class ErrorDC(releases: List<DreamCastReleaseElement>? = null) : UiDreamCastState(releases)
+class ErrorDC(
+    releases: List<DreamCastReleaseElement>? = null,
+    val error: NetworkError
+) : UiDreamCastState(releases)
 class LoadingNextDC(releases: List<DreamCastReleaseElement>? = null) : UiDreamCastState(releases)
 
 sealed class UiAnilibertyState(val releases: List<ReleasesElementResponse>? = null)
 
 class LoadingFirstAl(releases: List<ReleasesElementResponse>? = null) : UiAnilibertyState(releases)
-class ErrorAl(releases: List<ReleasesElementResponse>? = null) : UiAnilibertyState(releases)
+class ErrorAl(
+    releases: List<ReleasesElementResponse>? = null,
+    val error: NetworkError
+) : UiAnilibertyState(releases)
 class LoadingNextAl(releases: List<ReleasesElementResponse>?) : UiAnilibertyState(releases)
 class CompleteLoadAniliberty(releases: List<ReleasesElementResponse>?) : UiAnilibertyState(releases)
