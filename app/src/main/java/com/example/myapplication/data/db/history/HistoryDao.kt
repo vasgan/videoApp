@@ -16,10 +16,13 @@ interface HistoryDao {
     @Query("DELETE FROM history WHERE releaseId = :id")
     suspend fun deleteById(id: Int): Int
 
-    @Query("SELECT * FROM history WHERE releaseId = :id")
-    suspend fun getHistory(id: Int): List<History>?
+    @Query("SELECT * FROM history WHERE releaseId = :id AND doubers = :source ORDER BY dateUpdate DESC")
+    suspend fun getHistory(id: Int, source: String): List<History>?
 
     @Query("SELECT * FROM history")
     suspend fun getHistories(): List<History>?
+
+    @Query("SELECT * FROM history WHERE doubers = :source ORDER BY dateUpdate DESC LIMIT 1")
+    suspend fun getLastHistoryForSource(source: String): History?
 }
 

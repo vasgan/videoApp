@@ -8,16 +8,12 @@ import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
 import com.example.myapplication.data.network.Success
+import com.example.myapplication.data.mapper.toRelease
 import com.example.myapplication.data.network.responses.BaseFranchiseResponse
-import com.example.myapplication.data.network.responses.EpisodeResponse
 import com.example.myapplication.data.network.responses.FranchiseResponse
 import com.example.myapplication.data.network.responses.FullReleaseResponse
-import com.example.myapplication.data.network.responses.GenresResponse
-import com.example.myapplication.data.ui_data.Episode
 import com.example.myapplication.data.ui_data.Franchise
-import com.example.myapplication.data.ui_data.Genres
 import com.example.myapplication.data.ui_data.Release
-import com.example.myapplication.data.ui_data.SkipTime
 import com.example.myapplication.repository.favorite.FavoriteRepository
 import com.example.myapplication.repository.history.HistoryRepository
 import com.example.myapplication.repository.video.ReleaseRepository
@@ -61,7 +57,7 @@ class ReleaseScreenViewModel @Inject constructor(
     val uiStateHistory: StateFlow<History?> = _uiStateHistory.asStateFlow()
 
     fun getCurrentRelease(id: String, doubbers: String) {
-        getHistory(id.toInt())
+        getHistory(id.toInt(), doubbers)
         repository.getRelease(id).onEach {
             when (it) {
                 is Error<*> -> {
@@ -74,7 +70,9 @@ class ReleaseScreenViewModel @Inject constructor(
 
                 is Success<*> -> {
                     _uiStateRelease.value =
-                        UiReleaseAniliberty.CompleteUiReleaseAniliberty(mapRelease(it.data as FullReleaseResponse, doubbers))
+                        UiReleaseAniliberty.CompleteUiReleaseAniliberty(
+                            (it.data as FullReleaseResponse).toRelease(doubbers)
+                        )
                 }
             }
         }.launchIn(viewModelScope)
@@ -115,40 +113,13 @@ class ReleaseScreenViewModel @Inject constructor(
         }
     }
 
-    private fun getHistory(id: Int) {
+    private fun getHistory(id: Int, source: String) {
         viewModelScope.launch {
-            watchHistoryRepository.getHistoryRelease(id)?.let {
+            watchHistoryRepository.getHistoryRelease(id, source)?.let {
                 if (it.isNotEmpty())
                 _uiStateHistory.value = it[0]
             }
         }
-    }
-
-    private fun mapRelease(release: FullReleaseResponse, doubbers: String) = Release(
-        release.id,
-        release.name.main,
-        release.poster.preview,
-        release.description,
-        release.year + " " + release.season.description,
-        mapGenres(release.genres),
-        release.ageRating.value,
-        release.type.description + " (" + release.episodes.size + ")," + release.averageDurationOfEpisode + "мин",
-        (release.averageDurationOfEpisode).toString(),
-        mapEpisodes(release.episodes),
-        doubbers
-    )
-
-    private fun mapGenres(list: List<GenresResponse>): List<Genres> {
-        val genres = mutableListOf<Genres>()
-        list.forEach {
-            genres.add(
-                Genres(
-                    it.id,
-                    it.name
-                )
-            )
-        }
-        return genres
     }
 
     private fun mapFranchise(franchise: BaseFranchiseResponse?): List<Franchise> {
@@ -161,29 +132,6 @@ class ReleaseScreenViewModel @Inject constructor(
                     it.releaseId ?: "",
                     it.franchiseId ?: "",
                     it.release?.name?.main ?: ""
-                )
-            )
-        }
-        return value
-    }
-
-    private fun mapEpisodes(episodes: List<EpisodeResponse>): List<Episode> {
-        val value = mutableListOf<Episode>()
-        episodes.forEach {
-            value.add(
-                Episode(
-                    it.name ?: "",
-                    it.id,
-                    it.ordinal,
-                    it.hls480 ?: "",
-                    it.hls720 ?: "",
-                    it.hls1080 ?: "",
-                    it.duration,
-                    SkipTime(it.opening?.start ?: 0, it.opening?.stop ?: 0),
-                    SkipTime(it.ending?.start ?: 0, it.ending?.stop ?: 0),
-                    it.preview.thumbnail ?: "",
-                    it.sortOrder,
-                    it.releaseId.toString()
                 )
             )
         }

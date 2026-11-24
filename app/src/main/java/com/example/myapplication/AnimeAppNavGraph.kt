@@ -90,7 +90,8 @@ fun AnimeAppNavGraph(
         AnimeNavigation(navController)
     },
     viewModelFactory: ViewModelProvider.Factory,
-    PipCallBack: () -> Unit,
+    isInPipMode: Boolean,
+    PipCallBack: () -> Boolean,
     ConnectController: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val items = listOf(Root.Home, Root.Search, Root.GlobalSearch, Root.History, Root.Profile)
@@ -147,7 +148,14 @@ fun AnimeAppNavGraph(
                         ),
                         viewModel,
                         { navActions.navigateToRelease(it) },
-                        { navActions.navigateToDreamCastRelease(it) }
+                        { navActions.navigateToDreamCastRelease(it) },
+                        { episode, release, source ->
+                            navActions.navigateToPlayerScreen(
+                                episode,
+                                release,
+                                source
+                            )
+                        }
                     )
                 }
 
@@ -322,6 +330,7 @@ fun AnimeAppNavGraph(
                             viewModel = viewModel,
                             releaseBase = release,
                             doubers = doubers,
+                            isInPipMode = isInPipMode,
                             onBackClick = {
                                 navController.popBackStack()
                             },

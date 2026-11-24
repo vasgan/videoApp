@@ -1,6 +1,5 @@
 package com.example.myapplication.release_dreamcast
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
@@ -26,11 +25,8 @@ class ReleaseDreamCastViewModel @Inject constructor(
     private val watchListRepository: WatchListRepository,
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<DreamCastDescriptionAndSeries?> = MutableStateFlow(null)
-    val uiState: StateFlow<DreamCastDescriptionAndSeries?> = _uiState.asStateFlow()
-
-    private val _uiStateHistory: MutableStateFlow<History?> = MutableStateFlow(null)
-    val uiStateHistory: StateFlow<History?> = _uiStateHistory.asStateFlow()
+    private val _detailState = MutableStateFlow<DreamCastDetailState>(DreamCastDetailState.Loading)
+    val detailState: StateFlow<DreamCastDetailState> = _detailState.asStateFlow()
 
     //Избранное
     private val _uiStateFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -38,16 +34,6 @@ class ReleaseDreamCastViewModel @Inject constructor(
 
     private val _uiStateWatchList: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val watchListUiState: StateFlow<Boolean> = _uiStateWatchList.asStateFlow()
-
-    //Информация о релизе
-    private val _uiStateRelease: MutableStateFlow<DreamCastReleaseElement?> = MutableStateFlow(null)
-    val uiStateRelease: StateFlow<DreamCastReleaseElement?> = _uiStateRelease.asStateFlow()
-
-    fun initRelease(url: String, id: String) {
-        viewModelScope.launch  {
-            _uiStateRelease.value = repository.getReleaseById(url, id)
-        }
-    }
 
     fun initFavorite(id: Int) {
         favoriteRepository.getFavorite(id).onEach {
@@ -61,18 +47,32 @@ class ReleaseDreamCastViewModel @Inject constructor(
         }
     }
 
-    fun getSeriesList(url: String) {
-        viewModelScope.launch {
-            _uiState.value = repository.getVideoUrls(url)
+    fun loadDetails(
+        releaseUrl: String?,
+        releaseId: String?,
+        releaseFromNavigation: DreamCastReleaseElement?
+    ) {
+        if (releaseUrl.isNullOrBlank() || releaseId.isNullOrBlank()) {
+            _detailState.value = DreamCastDetailState.Error
+            return
         }
-    }
 
-    fun getHistory(id: Int) {
         viewModelScope.launch {
-            // todo test it
-            watchHistoryRepository.getHistoryRelease(id)?.let {
-                if (it.isNotEmpty())
-                    _uiStateHistory.value = it[0]
+            _detailState.value = DreamCastDetailState.Loading
+            try {
+                val release = releaseFromNavigation
+                    ?: repository.getReleaseById(releaseUrl, releaseId)
+                val id = release.id.toIntOrNull() ?: error("Invalid DreamCast release ID")
+                val series = repository.getVideoUrls(releaseUrl)
+                val history = watchHistoryRepository
+                    .getHistoryRelease(id, ReleaseSource.DreamCast.value)
+                    ?.firstOrNull()
+
+                _detailState.value = DreamCastDetailState.Content(release, series, history)
+                initFavorite(id)
+                initWatchList(id)
+            } catch (_: Exception) {
+                _detailState.value = DreamCastDetailState.Error
             }
         }
     }
@@ -116,4 +116,14 @@ class ReleaseDreamCastViewModel @Inject constructor(
             }
         }
     }
+}
+
+sealed interface DreamCastDetailState {
+    data object Loading : DreamCastDetailState
+    data object Error : DreamCastDetailState
+    data class Content(
+        val release: DreamCastReleaseElement,
+        val series: DreamCastDescriptionAndSeries,
+        val history: History?
+    ) : DreamCastDetailState
 }

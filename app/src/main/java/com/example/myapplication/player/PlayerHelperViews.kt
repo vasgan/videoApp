@@ -180,10 +180,11 @@ fun TopBarPlayer(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                val name =
-                    stringResource(
-                        R.string.series, (episode + 1).toString(), release.episodes[episode].name
-                    )
+                val name = stringResource(
+                    R.string.series,
+                    (episode + 1).toString(),
+                    release.episodes.getOrNull(episode)?.name.orEmpty()
+                )
                 Text(
                     text = name,
                     color = Color.LightGray,
@@ -195,7 +196,7 @@ fun TopBarPlayer(
             }) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_cast_24),
-                    contentDescription = "Меню",
+                    contentDescription = "Транслировать на экран",
                     tint = PlayerColor
                 )
             }

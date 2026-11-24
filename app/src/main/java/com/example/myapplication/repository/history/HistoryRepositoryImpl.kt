@@ -15,27 +15,15 @@ class HistoryRepositoryImpl (val historyDb: HistoryDao) : HistoryRepository {
         return historyDb.getHistories()
     }
 
-    override suspend fun getHistoryRelease(releaseId: Int): List<History>? {
-        return historyDb.getHistory(releaseId)
+    override suspend fun getHistoryRelease(releaseId: Int, source: String): List<History>? {
+        return historyDb.getHistory(releaseId, source)
     }
 
     override suspend fun getLastALRelease(): History? {
-        val sortedList = historyDb.getHistories()
-            ?.filter { ReleaseSource.fromValue(it.doubers) == ReleaseSource.Aniliberty }
-        sortedList?.size?.let {
-            if (it > 0)
-                return sortedList[0]
-        }
-        return null
+        return historyDb.getLastHistoryForSource(ReleaseSource.Aniliberty.value)
     }
 
     override suspend fun getLastDCRelease(): History? {
-        val sortedList = historyDb.getHistories()
-            ?.filter { ReleaseSource.fromValue(it.doubers) == ReleaseSource.DreamCast }
-        sortedList?.size?.let {
-            if (it > 0)
-                return sortedList[0]
-        }
-        return null
+        return historyDb.getLastHistoryForSource(ReleaseSource.DreamCast.value)
     }
 }

@@ -3,12 +3,17 @@ package com.example.myapplication.main_screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.db.history.History
+import com.example.myapplication.data.ReleaseSource
+import com.example.myapplication.data.mapper.toRelease
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
 import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.network.Success
+import com.example.myapplication.data.network.responses.FullReleaseResponse
+import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.data.network.responses.ReleasesElementResponse
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.data.parse.dreamcast.mapToRelease
 import com.example.myapplication.repository.dreamcast.DreamCastRepository
 import com.example.myapplication.repository.history.HistoryRepository
 import com.example.myapplication.repository.video.ReleaseRepository
@@ -16,6 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -34,6 +41,12 @@ class MainViewModel @Inject constructor(
     private val _uiStateLoadHistory: MutableStateFlow<History?> = MutableStateFlow(null)
     val uiStateHistory: StateFlow<History?> = _uiStateLoadHistory.asStateFlow()
 
+    private val _uiStateDreamCastHistory: MutableStateFlow<History?> = MutableStateFlow(null)
+    val uiStateDreamCastHistory: StateFlow<History?> = _uiStateDreamCastHistory.asStateFlow()
+
+    private val _continueWatchingEvents = MutableSharedFlow<ContinueWatchingDestination>()
+    val continueWatchingEvents: SharedFlow<ContinueWatchingDestination> = _continueWatchingEvents
+
     private var loadAniLiberty: Job? = null
     private var loadDreamCast: Job? = null
     private var pageAl = 1
@@ -43,11 +56,68 @@ class MainViewModel @Inject constructor(
         getAnilibertyLastReleases()
         getDreamCastReleases()
         loadHistory()
+        loadDreamCastHistory()
     }
 
     fun loadHistory() {
         viewModelScope.launch {
             _uiStateLoadHistory.value = historyRepository.getLastALRelease()
+        }
+    }
+
+    fun loadDreamCastHistory() {
+        viewModelScope.launch {
+            _uiStateDreamCastHistory.value = historyRepository.getLastDCRelease()
+        }
+    }
+
+    fun continueWatching() {
+        val history = _uiStateLoadHistory.value ?: return
+        repository.getRelease(history.releaseId.toString()).onEach { response ->
+            when (response) {
+                is Success -> {
+                    val release = (response.data as FullReleaseResponse)
+                        .toRelease(ReleaseSource.Aniliberty.value)
+                    val episode = history.episodeNumber
+                    if (episode in release.episodes.indices) {
+                        _continueWatchingEvents.emit(
+                            ContinueWatchingDestination(
+                                episode = episode,
+                                release = release,
+                                source = ReleaseSource.Aniliberty.value
+                            )
+                        )
+                    }
+                }
+
+                is Error -> Unit
+                is Loading -> Unit
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    fun continueWatchingDreamCast() {
+        val history = _uiStateDreamCastHistory.value ?: return
+        val url = history.url ?: return
+
+        viewModelScope.launch {
+            val dreamCastRelease = dreamCastRepository.getReleaseById(
+                urlRelease = url,
+                id = history.releaseId.toString()
+            )
+            val series = dreamCastRepository.getVideoUrls(url)
+            val release = mapToRelease(series, dreamCastRelease)
+            val episode = history.episodeNumber
+
+            if (episode in release.episodes.indices) {
+                _continueWatchingEvents.emit(
+                    ContinueWatchingDestination(
+                        episode = episode,
+                        release = release,
+                        source = ReleaseSource.DreamCast.value
+                    )
+                )
+            }
         }
     }
 
@@ -59,6 +129,7 @@ class MainViewModel @Inject constructor(
 
     fun refreshDreamCast() {
         getDreamCastReleases()
+        loadDreamCastHistory()
     }
 
     fun scrollEndDC() {
@@ -157,3 +228,9 @@ class ErrorAl(
 ) : UiAnilibertyState(releases)
 class LoadingNextAl(releases: List<ReleasesElementResponse>?) : UiAnilibertyState(releases)
 class CompleteLoadAniliberty(releases: List<ReleasesElementResponse>?) : UiAnilibertyState(releases)
+
+data class ContinueWatchingDestination(
+    val episode: Int,
+    val release: Release,
+    val source: String
+)

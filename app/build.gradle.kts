@@ -8,11 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.myapplication"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.myapplication"
         minSdk = 30
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -49,6 +50,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
@@ -56,6 +58,7 @@ dependencies {
     implementation(libs.dagger.dagger)
 
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.cast)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.exoplayer.hls)
@@ -69,7 +72,6 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.okhttp.logging.gson.converter)
     implementation(libs.retrofit.retrofit)
-    implementation(libs.retrofit.converter.moshi)
     implementation(libs.io.coil.kt.compose)
     implementation(libs.accompanist.google)
     implementation(libs.androidx.constraintlayout.compose)

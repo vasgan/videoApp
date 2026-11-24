@@ -1,31 +1,39 @@
 package com.example.myapplication.player.pip
 
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import com.example.myapplication.MainActivity
-import com.google.common.util.concurrent.MoreExecutors
-import kotlin.jvm.java
 
 class PipActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val token = SessionToken(context, ComponentName(context, PlayerService::class.java))
-        val future = MediaController.Builder(context, token).buildAsync()
+        dispatchPipAction(intent.action)
+    }
 
-        future.addListener({
-            val ctrl = future.get()
-            when (intent.action) {
-                MainActivity.ACTION_PIP_PLAY_PAUSE -> {
-                    if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
+    private fun dispatchPipAction(action: String?) {
+        val pendingResult = goAsync()
+        Handler(Looper.getMainLooper()).post {
+            try {
+                when (action) {
+                    MainActivity.ACTION_PIP_PREV -> PlayerHolder.onPrev?.invoke()
+                    MainActivity.ACTION_PIP_NEXT -> PlayerHolder.onNext?.invoke()
+                    MainActivity.ACTION_PIP_PLAY_PAUSE -> PlayerHolder.player?.let { player ->
+                        if (player.isPlaying) player.pause() else player.play()
+                    }
                 }
-                MainActivity.ACTION_PIP_NEXT -> ctrl.seekToNextMediaItem()
-                MainActivity.ACTION_PIP_PREV -> ctrl.seekToPreviousMediaItem()
+            } catch (exception: Exception) {
+                Log.w(TAG, "Could not handle PiP action", exception)
+            } finally {
+                pendingResult.finish()
             }
-            ctrl.release()
-        }, MoreExecutors.directExecutor())
+        }
+    }
+
+    private companion object {
+        const val TAG = "PipActionReceiver"
     }
 }

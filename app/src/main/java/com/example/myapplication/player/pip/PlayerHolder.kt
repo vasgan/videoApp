@@ -1,9 +1,9 @@
 package com.example.myapplication.player.pip
 
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.Player
 
 object PlayerHolder {
-    var player: ExoPlayer? = null
+    var player: Player? = null
     var onNext: (() -> Unit)? = null
     var onPrev: (() -> Unit)? = null
 }

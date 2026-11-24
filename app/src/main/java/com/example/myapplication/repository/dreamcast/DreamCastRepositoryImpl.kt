@@ -1,7 +1,5 @@
 package com.example.myapplication.repository.dreamcast
 
-import android.util.Base64
-import android.util.Log
 import com.example.myapplication.data.network.Error
 import com.example.myapplication.data.network.Loading
 import com.example.myapplication.data.network.NetworkError
@@ -9,6 +7,7 @@ import com.example.myapplication.data.network.NetworkResponseWrapper
 import com.example.myapplication.data.network.Success
 import com.example.myapplication.data.parse.dreamcast.BaseDreamCastSearch
 import com.example.myapplication.data.parse.dreamcast.DreamCastDescriptionAndSeries
+import com.example.myapplication.data.parse.dreamcast.DreamCastHtmlParser
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +25,8 @@ import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 class DreamCastRepositoryImpl : DreamCastRepository {
+    private val htmlParser = DreamCastHtmlParser()
+
     override fun searchOnDreamCast(search: String, pageNumber: Int): Flow<NetworkResponseWrapper<List<DreamCastReleaseElement>>> {
         return flow {
             emit(Loading())
@@ -67,85 +68,48 @@ class DreamCastRepositoryImpl : DreamCastRepository {
             Gson().fromJson(html, BaseDreamCastSearch::class.java).releases
         }
 
-    private suspend fun getDreamCastReleaseByUrl(url: String, id: String): DreamCastReleaseElement{
-        var release = DreamCastReleaseElement("","","","","","","","","","","","","","","","","","","", "","","","")
-        var html = ""
+    private suspend fun getDreamCastReleaseByUrl(url: String, id: String): DreamCastReleaseElement {
         val client = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
-        withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             val req = Request.Builder()
-                .url("https://dreamerscast.com/$url")
+                .url(dreamCastUrl(url))
                 .header("User-Agent", "Mozilla/5.0 (Kotlin)")
                 .header("Accept-Language", "ru")
                 .build()
 
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) error("HTTP ${resp.code}")
-                html = resp.body.string() // автоматически разжимает gzip/deflate
+                htmlParser.parseRelease(resp.body.string(), id)
             }
-
-            val imageFirst = html.indexOf("property=\"og:image\" content=\"") + "property=\"og:image\" content=\"".length
-            val imageEnd = html.indexOf("\">", imageFirst)
-            val image = html.substring(imageFirst, imageEnd)
-            val firstName = "<div class=\"col-md-8 postInfo\">\n" +
-                    "                <div class=\"postItem\">\n" +
-                    "                    <h3>"
-            val nameRuFirst = html.indexOf(firstName) + firstName.length - 12
-            val nameRuSecond = html.indexOf(" / ", nameRuFirst)
-            val russian = html.substring(nameRuFirst, nameRuSecond)
-            val originalStart = nameRuSecond + " / ".length
-            val originalSecond = html.indexOf("</h3>")
-            val original = html.substring(originalStart, originalSecond)
-
-            // todo сделать парсинг жанров и количества эпизодов
-
-            release = DreamCastReleaseElement(id,
-                russian,
-                original,
-                image,"","","","","","",
-                "","","","","","","","","", "","","","")
         }
-        return release
     }
 
     private suspend fun getDreamCastDescriptionAndSeries(url: String): DreamCastDescriptionAndSeries {
-        var html = ""
-        var strings = emptyList<String>()
-        var descriptionText = ""
         val client = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
-        withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             val req = Request.Builder()
-                .url(url)
+                .url(dreamCastUrl(url))
                 .header("User-Agent", "Mozilla/5.0 (Kotlin)")
                 .header("Accept-Language", "ru")
                 .build()
 
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) error("HTTP ${resp.code}")
-                html = resp.body.string() // автоматически разжимает gzip/deflate
-            }
-
-            val firstDes = html.indexOf("description\" content=\"")
-            val secondDes = html.indexOf("\">", firstDes)
-            descriptionText =
-                html.substring(firstDes + "description\" content=\"".length, secondDes)
-            val first = html.indexOf("atob(\"", secondDes)
-            val second = html.indexOf("\").split('||||')", first)
-            if (first < second) {
-                val str = html.substring(first + 6, second)
-                strings = decodeBase64(str).split("||||")
+                htmlParser.parseDescriptionAndSeries(resp.body.string())
             }
         }
-        return DreamCastDescriptionAndSeries(strings, descriptionText)
     }
 
-    private fun decodeBase64(encoded: String): String {
-        val decodedBytes = Base64.decode(encoded, Base64.DEFAULT)
-        return String(decodedBytes, Charsets.UTF_8)
-    }
+    private fun dreamCastUrl(pathOrUrl: String): String =
+        if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+            pathOrUrl
+        } else {
+            "https://dreamerscast.com/$pathOrUrl"
+        }
 }

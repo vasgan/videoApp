@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.data.network.NetworkError
 import com.example.myapplication.data.db.history.History
 import com.example.myapplication.data.parse.dreamcast.DreamCastReleaseElement
+import com.example.myapplication.data.ui_data.Release
 import com.example.myapplication.ui.EmptyState
 import com.example.myapplication.ui.LoadingSpinner
 import com.example.myapplication.ui.ReleaseElementView
@@ -52,7 +54,8 @@ fun ListScreen(
     innerPadding: PaddingValues,
     viewModel: MainViewModel,
     onItemClick: (String) -> Unit,
-    onDreamCastItemClick: (DreamCastReleaseElement) -> Unit
+    onDreamCastItemClick: (DreamCastReleaseElement) -> Unit,
+    onContinueWatching: (Int, Release, String) -> Unit
 ) {
     val listAlState = rememberSaveable(
         saver = LazyListState.Saver
@@ -66,6 +69,7 @@ fun ListScreen(
     }
 
     val historyAL by viewModel.uiStateHistory.collectAsState()
+    val historyDreamCast by viewModel.uiStateDreamCastHistory.collectAsState()
     val itemsAniliberty by viewModel.uiState.collectAsState()
     val itemsDreamCast by viewModel.uiDreamCastState.collectAsState()
     val tabs = listOf(
@@ -74,6 +78,12 @@ fun ListScreen(
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(viewModel) {
+        viewModel.continueWatchingEvents.collect { destination ->
+            onContinueWatching(destination.episode, destination.release, destination.source)
+        }
+    }
 
     Column(
         Modifier
@@ -111,16 +121,19 @@ fun ListScreen(
                     listState = listAlState,
                     onRefresh = viewModel::refreshAniliberty,
                     onScrollEnd = viewModel::scrollEndAnilibria,
-                    onItemClick = onItemClick
+                    onItemClick = onItemClick,
+                    onContinueWatchingClick = viewModel::continueWatching
                 )
 
                 1 -> DreamCastPage(
                     innerPadding = innerPadding,
                     state = itemsDreamCast,
+                    history = historyDreamCast,
                     listState = listDcState,
                     onRefresh = viewModel::refreshDreamCast,
                     onScrollEnd = viewModel::scrollEndDC,
-                    onItemClick = onDreamCastItemClick
+                    onItemClick = onDreamCastItemClick,
+                    onContinueWatchingClick = viewModel::continueWatchingDreamCast
                 )
             }
         }
@@ -136,7 +149,8 @@ private fun AnilibertyPage(
     listState: LazyListState,
     onRefresh: () -> Unit,
     onScrollEnd: () -> Unit,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onContinueWatchingClick: () -> Unit
 ) {
     PullToRefreshBox(
         isRefreshing = state is LoadingFirstAl,
@@ -155,7 +169,7 @@ private fun AnilibertyPage(
                 is LoadingNextAl -> {
                     history?.let {
                         item {
-                            ShowHistory(it, {})
+                            ShowHistory(it, onContinueWatchingClick)
                         }
                     }
                     state.releases?.let { elements ->
@@ -197,10 +211,12 @@ private fun AnilibertyPage(
 private fun DreamCastPage(
     innerPadding: PaddingValues,
     state: UiDreamCastState?,
+    history: History?,
     listState: LazyListState,
     onRefresh: () -> Unit,
     onScrollEnd: () -> Unit,
-    onItemClick: (DreamCastReleaseElement) -> Unit
+    onItemClick: (DreamCastReleaseElement) -> Unit,
+    onContinueWatchingClick: () -> Unit
 ) {
     PullToRefreshBox(
         isRefreshing = state is LoadingFirstDC,
@@ -217,6 +233,11 @@ private fun DreamCastPage(
             when (state) {
                 is CompleteLoadDreamCast,
                 is LoadingNextDC -> {
+                    history?.let {
+                        item {
+                            ShowHistory(it, onContinueWatchingClick)
+                        }
+                    }
                     state.releases?.let { list ->
                         items(list.size) { item ->
                             if (item > list.lastIndex - 3)

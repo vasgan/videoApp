@@ -74,14 +74,14 @@ class PlayerViewModel @Inject constructor(
     @SuppressLint("SuspiciousIndentation")
     fun initViewModel(episode: Int, release: Release, doubers: String) {
         doubersVm = doubers
-        _uiStateEpisode.value = episode
         _uiStateRelease.value = release
+        _uiStateEpisode.value = release.episodes.initialEpisodeIndex(episode)
         favoriteRepository.getFavorite(release.id.toInt()).onEach {
             if (it.id == release.id.toInt())
                 _uiStateFavorite.value = true
         }.launchIn(viewModelScope)
         viewModelScope.launch {
-            historiesRelease = historyRepository.getHistoryRelease(release.id.toInt())
+            historiesRelease = historyRepository.getHistoryRelease(release.id.toInt(), doubers)
             findEpisodeHistory(episode)
         }
     }
@@ -161,13 +161,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun onChangeEpisode(episodeNum: Int, position: Long) {
+        val release = _uiStateRelease.value ?: return
+        if (!release.episodes.isValidEpisodeIndex(episodeNum)) return
+
         findEpisodeHistory(episodeNum)
         updateHistory(position)
-        _uiStateRelease.value?.episodes?.let {
-            if (episodeNum >= it.size) {
-                return
-            }
-        }
         hideViews()
         _uiStateEpisode.value = episodeNum
     }
@@ -183,6 +181,7 @@ class PlayerViewModel @Inject constructor(
     fun updateHistory(position: Long) {
         val episodeNum = uiStateEpisode.value
         val release = uiStateRelease.value
+        if (release == null || !release.episodes.isValidEpisodeIndex(episodeNum)) return
         viewModelScope.launch {
             historyRepository.addToHistory(
                 History(
@@ -197,21 +196,26 @@ class PlayerViewModel @Inject constructor(
                     release?.url
                     )
                 )
-            historiesRelease = release?.id?.toInt()?.let { historyRepository.getHistoryRelease(it) }
+            historiesRelease = release?.id?.toInt()?.let {
+                historyRepository.getHistoryRelease(it, doubersVm)
+            }
         }
     }
 
     fun changePosition(position: Long) {
         _uiStatePosition.value = position
-        if (uiStateRelease.value?.episodes[uiStateEpisode.value]?.opening?.stop?.let { position / 1000 > it } == true &&
-            uiStateRelease.value?.episodes[uiStateEpisode.value]?.opening?.end?.let { position / 1000 < it } == true
+        val episode = uiStateRelease.value
+            ?.episodes
+            ?.getOrNull(uiStateEpisode.value)
+
+        if (episode?.opening?.stop?.let { position / 1000 > it } == true &&
+            episode.opening.end.let { position / 1000 < it }
         ) _uiStateShowOpening.value = true else {
             if (_uiStateShowOpening.value) _uiStateShowOpening.value = false
         }
 
-        _uiStatePosition.value = position
-        if (uiStateRelease.value?.episodes[uiStateEpisode.value]?.ending?.stop?.let { position / 1000 > it } == true &&
-            uiStateRelease.value?.episodes[uiStateEpisode.value]?.ending?.end?.let { position / 1000 < it } == true
+        if (episode?.ending?.stop?.let { position / 1000 > it } == true &&
+            episode.ending.end.let { position / 1000 < it }
         ) _uiStateShowEnding.value = true else {
             if (_uiStateShowEnding.value) _uiStateShowEnding.value = false
         }
@@ -238,8 +242,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun getCurrentEpisodeParam(): CurrentEpisodeParam {
-        var url = uiStateRelease.value?.episodes[_uiStateEpisode.value]?.hls480
-        if (url.isNullOrBlank()) url = ""
+        val url = uiStateRelease.value
+            ?.episodes
+            ?.getOrNull(_uiStateEpisode.value)
+            ?.hls480
+            .orEmpty()
         var time = historiesRelease?.find { history -> history.episodeNumber == _uiStateEpisode.value }?.timeEnd
         if (time == null) time = 0L
         return CurrentEpisodeParam(url, time)

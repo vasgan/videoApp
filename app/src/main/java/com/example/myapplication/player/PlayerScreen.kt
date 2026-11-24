@@ -1,8 +1,6 @@
 package com.example.myapplication.player
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -52,6 +50,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
 import com.example.myapplication.data.ui_data.Release
+import com.example.myapplication.player.pip.PlayerHolder
 import com.example.myapplication.ui.findActivity
 import com.example.myapplication.ui.setFullscreen
 import com.example.myapplication.ui.theme.PlayerColor
@@ -68,13 +67,16 @@ fun PlayerScreen(
     viewModel: PlayerViewModel,
     releaseBase: Release,
     doubers: String,
+    isInPipMode: Boolean,
     onBackClick: () -> Unit,
-    PipCallback: () -> Unit,
+    PipCallback: () -> Boolean,
     ConnectController: (onReady: (MediaController) -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     val activity = context.findActivity()
-    activity?.setFullscreen(true)
+    if (!isInPipMode) {
+        activity?.setFullscreen(true)
+    }
     val scope = rememberCoroutineScope()
     var duration by remember { mutableLongStateOf(0L) }
     var draggingPosition by remember { mutableLongStateOf(0L) }
@@ -96,6 +98,7 @@ fun PlayerScreen(
     val uiStateHistory by viewModel.uiStateHistoryPosition.collectAsState()
     var started by rememberSaveable { mutableStateOf(false) }
     var control by remember { mutableStateOf<MediaController?>(null) }
+    val showCastDevicePicker = rememberCastDevicePicker()
 
     LaunchedEffect(Unit) {
         viewModel.initViewModel(episodeCount, releaseBase, doubers)
@@ -126,6 +129,7 @@ fun PlayerScreen(
             }
         }
         fun changeEpisode(episodeNum: Int) {
+            if (episodeNum !in (release?.episodes?.indices ?: IntRange.EMPTY)) return
             control?.currentPosition?.let {
                 viewModel.onChangeEpisode(episodeNum, it)
             }
@@ -135,6 +139,18 @@ fun PlayerScreen(
             control?.prepare()
             control?.playWhenReady = true
             showSeriesList = false
+        }
+
+        DisposableEffect(control, episodeNumber, release?.episodes?.size) {
+            val nextEpisode: () -> Unit = { changeEpisode(episodeNumber + 1) }
+            val previousEpisode: () -> Unit = { changeEpisode(episodeNumber - 1) }
+            PlayerHolder.onNext = nextEpisode
+            PlayerHolder.onPrev = previousEpisode
+
+            onDispose {
+                if (PlayerHolder.onNext === nextEpisode) PlayerHolder.onNext = null
+                if (PlayerHolder.onPrev === previousEpisode) PlayerHolder.onPrev = null
+            }
         }
 
         AndroidView(
@@ -156,7 +172,7 @@ fun PlayerScreen(
 
         DisposableEffect(control) {
             val currentControl = control
-            currentControl?.addListener(object : Player.Listener {
+            val playerListener = object : Player.Listener {
                 private var wasSeek = false
                 override fun onPositionDiscontinuity(
                     oldPosition: Player.PositionInfo,
@@ -165,7 +181,7 @@ fun PlayerScreen(
                 ) {
                     if (reason == Player.DISCONTINUITY_REASON_SEEK) {
                         wasSeek = true
-                        viewModel.updateHistory(currentControl.currentPosition)
+                        viewModel.updateHistory(currentControl?.currentPosition ?: 0L)
                     }
                 }
 
@@ -174,27 +190,32 @@ fun PlayerScreen(
                         wasSeek = false
                         viewModel.draggingEnd()
                     }
-                    viewModel.updateHistory(currentControl.currentPosition)
+                    viewModel.updateHistory(currentControl?.currentPosition ?: 0L)
                 }
-            })
-            val window = (context as Activity).window
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            currentControl?.addListener(playerListener)
+            val window = activity?.window
+            window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             onDispose {
                 currentControl?.let {
                     viewModel.updateHistory(it.currentPosition)
-                    currentControl.run {
+                    it.removeListener(playerListener)
+                }
+                window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                if (activity?.isInPictureInPictureMode != true) {
+                    currentControl?.run {
                         pause()
                         stop()
                         clearMediaItems()
                     }
+                    activity?.setFullscreen(false)
                 }
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                activity?.setFullscreen(false)
             }
         }
 
-        var jobMoving: Job? = null
-        Box(
+        if (!isInPipMode) {
+            var jobMoving: Job? = null
+            Box(
             Modifier
                 .pointerInput(Unit) {
                     detectTapGestures(
@@ -245,7 +266,7 @@ fun PlayerScreen(
                     )
                 }
                 .fillMaxSize(),
-        ) {
+            ) {
             when (showSupportView) {
                 is SupportView.OnShowEnd -> {
                     control?.setPlaybackSpeed(1f)
@@ -262,13 +283,13 @@ fun PlayerScreen(
                     SupportPlayerView(Modifier.align(Alignment.TopCenter), "x2")
                 }
             }
-        }
+            }
 
-        AnimatedVisibility(
-            visible = visible,
-            enter = fadeIn(animationSpec = tween(600)),
-            exit = fadeOut(animationSpec = tween(600))
-        ) {
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(animationSpec = tween(600)),
+                exit = fadeOut(animationSpec = tween(600))
+            ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 //Нижние кнопки
                 BottomButtons(
@@ -279,17 +300,14 @@ fun PlayerScreen(
                     uiStateShowEnding, {
                         viewModel.onFavoriteClick()
                     }, {
-                        // todo picture in picture
-                        Log.e("ololololololo", "first go to pip")
-                        viewModel.urgentlyHideViews()
-                        control?.let { PipCallback() }
+                        if (PipCallback()) viewModel.urgentlyHideViews()
                     }, {
                         showChangeQuality = true
                     }, {
-                        release?.episodes[episodeCount]?.ending?.end?.toLong()
+                        release?.episodes?.getOrNull(episodeNumber)?.ending?.end?.toLong()
                             ?.let { control?.seekTo(it * 1000) }
                     }, {
-                        release?.episodes[episodeCount]?.opening?.end?.toLong()
+                        release?.episodes?.getOrNull(episodeNumber)?.opening?.end?.toLong()
                             ?.let { control?.seekTo(it * 1000) }
                     }
                 )
@@ -316,6 +334,7 @@ fun PlayerScreen(
                         activity?.setFullscreen(false)
                         onBackClick()
                     }, {
+                        showCastDevicePicker()
                     }, {
                         showSeriesList = true
                     }
@@ -355,6 +374,7 @@ fun PlayerScreen(
                     color = PlayerColor
                 )
             }
+            }
         }
         when (seekTo) {
             is SeekToState.OnNext -> {
@@ -383,7 +403,7 @@ fun PlayerScreen(
             }
         }
 
-        if (showSeriesList) {
+        if (!isInPipMode && showSeriesList) {
             release?.episodes?.let {
                 ChooseEpisodeDialog(it, {
                     showSeriesList = false
@@ -393,7 +413,7 @@ fun PlayerScreen(
             }
         }
 
-        if (showChangeQuality) {
+        if (!isInPipMode && showChangeQuality) {
             control?.let { player ->
                 OpenSettings(
                     availableVideoHeights(player),
